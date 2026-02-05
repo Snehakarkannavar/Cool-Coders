@@ -1,5 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
+import { registerMongoDBRoutes } from "./mongodb-routes";
+import { connectToMongoDB } from "./mongodb";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 
@@ -75,6 +77,15 @@ app.use((req, res, next) => {
     return res.status(status).json({ message });
   });
 
+  // Connect to MongoDB
+  connectToMongoDB().catch(err => {
+    console.error('Failed to connect to MongoDB:', err);
+    // Server continues without MongoDB (uses localStorage fallback)
+  });
+
+  // Register MongoDB API routes
+  registerMongoDBRoutes(app);
+
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
@@ -90,14 +101,7 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || "5000", 10);
-  httpServer.listen(
-    {
-      port,
-      host: "0.0.0.0",
-      reusePort: true,
-    },
-    () => {
-      log(`serving on port ${port}`);
-    },
-  );
+  httpServer.listen(port, "0.0.0.0", () => {
+    log(`serving on port ${port}`);
+  });
 })();

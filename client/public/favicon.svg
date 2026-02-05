@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none">
+  <!-- Background -->
+  <rect width="256" height="256" fill="#8b5cf6" rx="48"/>
+  
+  <!-- Chart bars -->
+  <rect x="50" y="140" width="30" height="80" fill="white" opacity="0.9" rx="4"/>
+  <rect x="95" y="100" width="30" height="120" fill="white" opacity="0.9" rx="4"/>
+  <rect x="140" y="70" width="30" height="150" fill="white" opacity="0.9" rx="4"/>
+  <rect x="185" y="110" width="30" height="110" fill="white" opacity="0.9" rx="4"/>
+  
+  <!-- Trend line -->
+  <path d="M 40 180 Q 80 160, 110 130 T 155 90 T 200 120" 
+        stroke="#06b6d4" 
+        stroke-width="6" 
+        fill="none" 
+        stroke-linecap="round"
+        stroke-linejoin="round"/>
+  
+  <!-- Data points -->
+  <circle cx="65" cy="170" r="8" fill="#06b6d4" stroke="white" stroke-width="2"/>
+  <circle cx="110" cy="140" r="8" fill="#06b6d4" stroke="white" stroke-width="2"/>
+  <circle cx="155" cy="100" r="8" fill="#06b6d4" stroke="white" stroke-width="2"/>
+  <circle cx="200" cy="120" r="8" fill="#06b6d4" stroke="white" stroke-width="2"/>
+  
+  <!-- Arrow -->
+  <path d="M 210 100 L 230 80 L 230 100 Z" fill="#10b981"/>
+  <path d="M 210 100 L 230 80 L 210 80 Z" fill="#10b981"/>
+</svg>

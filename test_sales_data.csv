@@ -1,0 +1,25 @@
+month,sales,revenue,region,product,quantity,price
+January,120,12000,North,Widget A,50,240
+February,145,14500,North,Widget A,60,241.67
+March,160,16000,North,Widget A,65,246.15
+April,175,17500,North,Widget A,72,243.06
+May,185,18500,North,Widget A,78,237.18
+June,195,19500,North,Widget A,82,237.80
+January,85,8500,South,Widget B,35,242.86
+February,92,9200,South,Widget B,38,242.11
+March,110,11000,South,Widget B,45,244.44
+April,125,12500,South,Widget B,52,240.38
+May,140,14000,South,Widget B,58,241.38
+June,155,15500,South,Widget B,64,242.19
+January,95,9500,East,Widget C,40,237.50
+February,110,11000,East,Widget C,46,239.13
+March,125,12500,East,Widget C,52,240.38
+April,140,14000,East,Widget C,58,241.38
+May,155,15500,East,Widget C,64,242.19
+June,170,17000,East,Widget C,70,242.86
+January,75,7500,West,Widget D,30,250.00
+February,88,8800,West,Widget D,36,244.44
+March,102,10200,West,Widget D,42,242.86
+April,118,11800,West,Widget D,48,245.83
+May,135,13500,West,Widget D,55,245.45
+June,152,15200,West,Widget D,62,245.16
