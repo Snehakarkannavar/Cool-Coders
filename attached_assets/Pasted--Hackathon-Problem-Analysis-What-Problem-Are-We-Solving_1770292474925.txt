@@ -1,0 +1,227 @@
+# 🎯 Hackathon Problem Analysis
+
+## **What Problem Are We Solving?**
+
+You're building an **AI-powered data exploration platform** that lets **non-technical users** ask questions about their data in plain English and get instant visualizations—without writing SQL, Python, or any code.
+
+**Think of it as:** "ChatGPT for your business data" - you upload data sources, ask questions naturally, and get charts/reports automatically.
+
+---
+
+## **Core User Journey**
+
+1. **User connects data** (upload CSV/Excel, or connect to a database)
+2. **System understands the data** (reads columns, infers relationships)
+3. **User asks natural language questions** like "Show me sales by month"
+4. **AI converts question → query → visualization**
+5. **User refines interactively** ("Now only for 2024", "Show as pie chart")
+
+---
+
+## **Technical Architecture Overview**
+
+```
+┌─────────────────┐
+│  User Interface │  (React.js - what you'll build)
+└────────┬────────┘
+         │
+    ┌────▼─────────────────────────────┐
+    │  Natural Language → Query Engine │  (Claude API)
+    └────┬─────────────────────────────┘
+         │
+    ┌────▼──────────────┐
+    │  Data Processing  │  (Parse CSVs, run queries)
+    └────┬──────────────┘
+         │
+    ┌────▼────────────┐
+    │  Visualization  │  (Chart.js / Recharts)
+    └─────────────────┘
+```
+
+---
+
+# 📋 Replit Prompt for Claude
+
+Copy this **exact prompt** into Claude in your Replit environment:
+
+---
+
+## **REPLIT PROMPT** (Copy Below)
+
+```
+I'm building an AI-powered ad-hoc reporting platform for a hackathon. Create a React.js application with these requirements:
+
+## CORE FEATURES TO BUILD:
+
+### 1. DATA SOURCE CONNECTION
+- File upload interface supporting:
+  - CSV files
+  - Excel files (.xlsx)
+- Display uploaded file info (name, size, row count)
+- Parse and preview first 10 rows in a table
+
+### 2. SCHEMA UNDERSTANDING
+- Automatically detect:
+  - Column names and data types (string, number, date)
+  - Sample values for each column
+- Display schema in a clean, readable format
+- Show data statistics (min, max, avg for numbers; unique count for strings)
+
+### 3. NATURAL LANGUAGE QUERY INTERFACE
+- Chat-style interface where users can type questions like:
+  - "Show total sales by month"
+  - "Top 5 products by revenue"
+  - "Compare Q1 vs Q2 performance"
+- Use the Anthropic Claude API to:
+  - Parse natural language questions
+  - Determine which columns are needed
+  - Generate appropriate aggregations (sum, count, average, etc.)
+  - Decide best visualization type
+
+### 4. DYNAMIC VISUALIZATION
+- Generate charts automatically using Recharts library:
+  - Bar charts (for comparisons)
+  - Line charts (for trends over time)
+  - Pie charts (for proportions)
+  - Data tables (for detailed views)
+- Allow users to switch between chart types
+- Interactive filters and legends
+
+### 5. CONVERSATIONAL FOLLOW-UPS
+- Maintain conversation context so users can ask:
+  - "Now break it down by region"
+  - "Only show last 6 months"
+  - "Change to a pie chart"
+- Display conversation history
+
+## TECHNICAL REQUIREMENTS:
+
+**Frontend Stack:**
+- React.js with hooks (useState, useEffect)
+- Tailwind CSS for styling
+- Recharts for visualizations
+- PapaParse for CSV parsing
+- SheetJS (xlsx) for Excel parsing
+
+**AI Integration:**
+- Use Anthropic Claude API (accessed via fetch to https://api.anthropic.com/v1/messages)
+- System prompt should instruct Claude to:
+  - Analyze the data schema
+  - Parse user questions
+  - Return structured JSON with: {columns_needed, aggregation_type, filter_conditions, chart_type, explanation}
+  - Generate JavaScript code to process the data
+
+**Data Processing:**
+- All processing happens in browser (no backend needed for MVP)
+- Use JavaScript array methods (filter, map, reduce) to:
+  - Filter rows based on conditions
+  - Group by columns
+  - Calculate aggregations
+  - Format data for charts
+
+## FILE STRUCTURE:
+```
+src/
+├── App.jsx (main application)
+├── components/
+│   ├── FileUploader.jsx
+│   ├── DataPreview.jsx
+│   ├── ChatInterface.jsx
+│   ├── ChartRenderer.jsx
+│   └── SchemaViewer.jsx
+└── utils/
+    ├── dataParser.js
+    ├── queryProcessor.js
+    └── claudeAPI.js
+```
+
+## KEY FUNCTIONALITY FLOW:
+
+1. **Upload Phase:**
+   - User uploads CSV/Excel
+   - Parse file and store data in state
+   - Auto-detect schema and show preview
+
+2. **Query Phase:**
+   - User types natural language question
+   - Send to Claude API with data schema
+   - Claude returns structured query plan
+
+3. **Processing Phase:**
+   - Execute query plan on dataset
+   - Transform data into chart-ready format
+
+4. **Visualization Phase:**
+   - Render appropriate chart type
+   - Show explanation of what was calculated
+   - Enable chart type switching and filters
+
+5. **Refinement Phase:**
+   - User asks follow-up question
+   - Maintain context from previous query
+   - Re-process and update visualization
+
+## IMPORTANT IMPLEMENTATION NOTES:
+
+- Start with CSV support only (Excel is bonus)
+- Focus on common aggregations: SUM, COUNT, AVERAGE, MAX, MIN
+- Handle date parsing for time-based queries
+- Show loading states during API calls
+- Display error messages clearly
+- Make the UI clean and professional
+
+## SAMPLE INTERACTION:
+
+User uploads "sales_data.csv" with columns: [date, product, region, revenue, quantity]
+
+User asks: "Show total revenue by month"
+→ Claude analyzes schema
+→ Returns: {group_by: "date (by month)", aggregate: "sum(revenue)", chart: "bar"}
+→ App processes data
+→ Displays bar chart with months on X-axis, total revenue on Y-axis
+
+User asks: "Now only for the East region"
+→ Claude understands context
+→ Returns: {filter: "region = East", maintain_previous_grouping: true}
+→ App re-processes with filter
+→ Updates chart
+
+Please build this step-by-step, starting with file upload and data preview, then adding the AI query interface, then visualizations.
+```
+
+---
+
+# 📖 What Each Component Does
+
+| Component | Purpose |
+|-----------|---------|
+| **FileUploader** | Drag-drop zone to upload CSV/Excel files |
+| **DataPreview** | Shows first 10 rows in a table |
+| **SchemaViewer** | Displays column names, types, stats |
+| **ChatInterface** | Text input + conversation history |
+| **ChartRenderer** | Renders Bar/Line/Pie charts based on data |
+| **claudeAPI.js** | Handles API calls to Claude |
+| **queryProcessor.js** | Executes data transformations (filter/group/aggregate) |
+
+---
+
+# 🎓 What Makes This Solution Stand Out
+
+✅ **No-code data exploration** - anyone can use it  
+✅ **Multi-source support** - CSV + Excel  
+✅ **Conversational** - follow-up questions maintain context  
+✅ **Auto-visualization** - AI picks the best chart type  
+✅ **Fully client-side** - no backend needed for MVP  
+
+---
+
+# 🚀 Next Steps
+
+1. **Copy the Replit prompt above** into Claude in your Replit project
+2. Claude will build the React app component-by-component
+3. Test with sample CSV files (sales data works great)
+4. Add bonus features if time permits (Excel support, PDF export, etc.)
+
+---
+
+Would you like me to also create **sample CSV data** you can use for testing, or help you design the **Claude API prompt** that will power the natural language understanding?
