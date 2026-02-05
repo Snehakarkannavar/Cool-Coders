@@ -1,6 +1,6 @@
 // This file is required by the template but we primarily use
-// the chat storage from replit_integrations/chat/storage.ts
-import { chatStorage } from "./replit_integrations/chat/storage";
+// the chat storage from datasights_integrations/chat/storage.ts
+import { chatStorage } from "./datasights_integrations/chat/storage";
 
 export interface IStorage {
   // Add any other methods here if needed

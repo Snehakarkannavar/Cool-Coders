@@ -40,13 +40,13 @@ You're building an **AI-powered data exploration platform** that lets **non-tech
 
 ---
 
-# 📋 Replit Prompt for Claude
+# 📋 DataSights Prompt for Claude
 
-Copy this **exact prompt** into Claude in your Replit environment:
+Copy this **exact prompt** into Claude in your DataSights environment:
 
 ---
 
-## **REPLIT PROMPT** (Copy Below)
+## **DATASIGHTS PROMPT** (Copy Below)
 
 ```
 I'm building an AI-powered ad-hoc reporting platform for a hackathon. Create a React.js application with these requirements:
