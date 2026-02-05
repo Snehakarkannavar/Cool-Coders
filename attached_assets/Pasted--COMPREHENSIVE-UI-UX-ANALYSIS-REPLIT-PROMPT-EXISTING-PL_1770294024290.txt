@@ -1,0 +1,829 @@
+🎯 COMPREHENSIVE UI/UX ANALYSIS & REPLIT PROMPT
+📊 EXISTING PLATFORMS ANALYSIS
+1. Microsoft Power BI
+What it does well:
+
+Left sidebar with data sources tree view
+Center canvas for visual composition
+Right panel for field selection and filters
+Bottom visualization gallery (20+ chart types)
+Drag-and-drop field assignments
+Real-time preview as you build
+
+UI Structure:
+┌─────────────┬───────────────────────────────┬──────────────┐
+│   FIELDS    │     CANVAS (Visuals)          │   FILTERS    │
+│   SIDEBAR   │                               │   PANEL      │
+│             │                               │              │
+│ 📊 Tables   │   [Chart 1]    [Chart 2]     │ 🔍 Filters   │
+│  └─Sales    │                               │              │
+│  └─Products │   [Chart 3]    [Chart 4]     │ 📅 Date      │
+│             │                               │ 📍 Region    │
+└─────────────┴───────────────────────────────┴──────────────┘
+        └──── Visualization Types Gallery ────┘
+        [Bar] [Line] [Pie] [Table] [Map] [Gauge]...
+
+2. Tableau
+What it does well:
+
+Data source connections prominent at start
+"Show Me" panel suggests best visualizations
+Shelves for dragging dimensions/measures
+Worksheet tabs for multiple views
+Professional color schemes
+
+
+3. Looker Studio (Google Data Studio)
+What it does well:
+
+Simple data connector interface
+Template gallery for quick starts
+Clean, minimal design
+Easy sharing and collaboration
+
+
+4. Metabase
+What it does well:
+
+SQL editor + visual query builder toggle
+Natural language "Ask a Question" feature
+Simple, accessible UI for non-technical users
+
+
+🎨 YOUR APPLICATION UI DESIGN SPEC
+Based on Power BI + Windsurf chat model, here's the EXACT layout:
+┌────────────────────────────────────────────────────────────────────┐
+│  📊 DataSense AI  |  Dashboard  |  Data Sources  |  Reports  | ⚙️  │  ← Top Nav
+├──────────┬─────────────────────────────────────────────┬────────────┤
+│          │                                             │            │
+│ 📁 DATA  │          MAIN CANVAS                        │  💬 CHAT   │
+│ SOURCES  │                                             │  ASSISTANT │
+│          │                                             │            │
+│ ▼ Active │   ┌─────────────┐  ┌─────────────┐        │ [Minimize] │
+│          │   │   Bar Chart │  │  Line Chart │        │            │
+│ 📊 Sales │   │   Revenue   │  │   Trend     │        │ 🤖 Ask me  │
+│  ├ date  │   └─────────────┘  └─────────────┘        │ anything   │
+│  ├ region│                                             │ about your │
+│  ├ product│  ┌─────────────┐  ┌─────────────┐        │ data...    │
+│  └ revenue│  │  Pie Chart  │  │    Table    │        │            │
+│          │   │  By Region  │  │  Top 10     │        │ [Type...]  │
+│ ➕ Add   │   └─────────────┘  └─────────────┘        │            │
+│ Source   │                                             │ Recent:    │
+│          │                                             │ • Show sales│
+│ 📂 Recent│                                             │ • Top prods│
+│ Datasets │                                             │            │
+│          │                                             │ [Send] 📤  │
+└──────────┴─────────────────────────────────────────────┴────────────┘
+           └─── VISUALIZATION GALLERY ────────────────────┘
+           [📊 Bar] [📈 Line] [🥧 Pie] [📋 Table] [🗺️ Map] [⚡ Gauge]
+                    [📉 Area] [🔵 Scatter] [📊 Stacked] [More...]
+UI SECTIONS BREAKDOWN:
+LEFT SIDEBAR (200px wide)
+
+Data Sources Panel
+
+Connection buttons (Excel, CSV, SQL, MongoDB)
+Tree view of loaded datasets
+Column list with data type icons
+Drag-and-drop enabled
+"Add New Source" button
+
+
+
+CENTER CANVAS (Flexible, main area)
+
+Dashboard Grid System
+
+Drag-and-drop visual placement
+Resize handles on charts
+Click to edit/configure
+Empty state: "Drop visuals here or ask the AI assistant"
+
+
+
+RIGHT SIDEBAR (300px, collapsible)
+
+AI Chat Interface
+
+Minimize/maximize toggle (like Windsurf)
+Chat history with timestamps
+Typing indicator during processing
+Code/query preview (expandable)
+Suggested questions based on data
+
+
+
+BOTTOM VISUALIZATION GALLERY (60px tall)
+
+Smart Visual Suggestions
+
+Grayed out if incompatible with selected data
+Tooltips: "Pie chart requires 1 category + 1 measure"
+Click to add to canvas
+Categories: Charts, Tables, Maps, Gauges, Custom
+
+
+
+
+🔥 COMPLETE REPLIT PROMPT (COPY THIS)
+I'm building a professional AI-powered business intelligence platform for a hackathon that combines Power BI's visual capabilities with a ChatGPT-like assistant. This is a React.js application that must look and function like a production-ready BI tool.
+
+═══════════════════════════════════════════════════════════════
+                    🎯 CORE VISION
+═══════════════════════════════════════════════════════════════
+
+Think: "Power BI + Windsurf Chat + Natural Language Querying"
+
+Users can:
+1. Upload data (CSV, Excel) OR connect to databases (SQL, MongoDB)
+2. Either:
+   - MANUALLY: Drag fields to create charts (Power BI style)
+   - AI-ASSISTED: Chat with AI to generate visuals ("Show me sales by region as a bar chart")
+3. Build interactive dashboards with multiple visualizations
+4. Export reports and insights
+
+═══════════════════════════════════════════════════════════════
+                    🎨 EXACT UI LAYOUT
+═══════════════════════════════════════════════════════════════
+
+┌─────────────────────────────────────────────────────────────┐
+│  📊 DataSense AI  │  Dashboard │ Data │ Reports │ Profile ⚙️│  ← Top Navigation (60px)
+├──────────┬────────────────────────────────────────┬──────────┤
+│          │                                        │          │
+│ DATA     │        MAIN CANVAS                     │  CHAT    │
+│ SOURCES  │        (Dashboard Grid)                │  PANEL   │
+│ (200px)  │                                        │ (300px)  │
+│          │   [Chart 1]    [Chart 2]              │ Collapsible
+│ 📂 Active│                                        │          │
+│ Datasets │   [Chart 3]    [Chart 4]              │ 💬 AI    │
+│          │                                        │ Assistant│
+│ ▼ Sales  │                                        │          │
+│  ├📅 date│   Drag & Drop Zone                    │ Ask me   │
+│  ├📍region│  Or use chat →                       │ anything │
+│  ├📦 prod │                                        │          │
+│  └💰 rev  │                                        │ [Input]  │
+│          │                                        │          │
+│ ➕ Add   │                                        │ [Send]📤 │
+│ Source   │                                        │          │
+└──────────┴────────────────────────────────────────┴──────────┘
+           └────── VISUALIZATION GALLERY ──────────┘
+           📊Bar 📈Line 🥧Pie 📋Table 🗺️Map ⚡Gauge [+More]
+                        (60px tall)
+
+═══════════════════════════════════════════════════════════════
+              📋 DETAILED REQUIREMENTS
+═══════════════════════════════════════════════════════════════
+
+─────────────────────────────────────────────────────────────
+1. TOP NAVIGATION BAR
+─────────────────────────────────────────────────────────────
+- Logo: "DataSense AI" with icon
+- Tabs: Dashboard | Data Sources | Reports | Settings
+- Right corner: User avatar + notifications
+- Color: Dark gradient (#1e293b to #0f172a)
+- Height: 60px
+
+─────────────────────────────────────────────────────────────
+2. LEFT SIDEBAR - DATA SOURCES PANEL (200px wide)
+─────────────────────────────────────────────────────────────
+
+SECTION A: Connection Interface
+┌─────────────────────────┐
+│  ➕ Add Data Source      │
+│  ┌───┐ ┌───┐ ┌───┐     │
+│  │CSV│ │XLS│ │SQL│     │  ← Clickable cards
+│  └───┘ └───┘ └───┘     │
+│  ┌───┐ ┌───┐           │
+│  │API│ │MDB│           │
+│  └───┘ └───┘           │
+└─────────────────────────┘
+
+When clicked, show modal:
+- CSV/Excel: File upload with drag-drop
+- SQL: Connection form (host, port, database, credentials)
+- MongoDB: Connection string input
+- Preview first 100 rows before confirming
+
+SECTION B: Active Datasets Tree
+┌─────────────────────────┐
+│ 📂 Active Datasets       │
+│                         │
+│ ▼ 📊 sales_data.csv     │
+│   ├ 📅 date (Date)      │ ← Draggable
+│   ├ 📍 region (Text)    │
+│   ├ 📦 product (Text)   │
+│   └ 💰 revenue (Number) │
+│                         │
+│ ▶ 📊 customers.xlsx     │
+│                         │
+│ 🗑️ Remove | 🔄 Refresh  │
+└─────────────────────────┘
+
+Features:
+- Collapsible tree with icons for data types
+- Drag fields to canvas to create quick charts
+- Right-click context menu: View data, Remove, Export
+- Show row count and last updated time
+
+SECTION C: Data Quality Indicators
+- Show % completeness per column
+- Warning icons for nulls/duplicates
+- Quick stats (min, max, avg for numbers)
+
+─────────────────────────────────────────────────────────────
+3. CENTER CANVAS - DASHBOARD BUILDER (Flexible width)
+─────────────────────────────────────────────────────────────
+
+GRID SYSTEM:
+- 12-column responsive grid
+- Each visual can span 1-12 columns
+- Drag corners to resize
+- Drag header to reposition
+
+EMPTY STATE:
+┌────────────────────────────────┐
+│                                │
+│    📊 No visualizations yet    │
+│                                │
+│    Try:                        │
+│    • Drag fields from sidebar  │
+│    • Choose a visual below     │
+│    • Ask the AI assistant →   │
+│                                │
+└────────────────────────────────┘
+
+POPULATED STATE:
+- Each chart in a card with:
+  - Title (editable)
+  - Toolbar: Edit | Duplicate | Delete | Download
+  - Responsive chart using Recharts
+  - Hover tooltips with values
+  
+CHART INTERACTION:
+- Click data point → Filter entire dashboard
+- Hover → Show detailed tooltip
+- Legend click → Toggle series visibility
+
+─────────────────────────────────────────────────────────────
+4. RIGHT SIDEBAR - AI CHAT ASSISTANT (300px, collapsible)
+─────────────────────────────────────────────────────────────
+
+DESIGN LIKE WINDSURF:
+┌──────────────────────────┐
+│ 💬 AI Assistant    [−][×]│ ← Minimize/close
+├──────────────────────────┤
+│                          │
+│ 🤖 Hi! I can help you    │
+│    analyze your data.    │
+│                          │
+│ 👤 Show sales by month   │
+│                          │
+│ 🤖 I've created a line   │
+│    chart showing monthly │
+│    sales trends. [View]  │
+│    ┌─────────────┐       │
+│    │ Line Chart  │       │ ← Mini preview
+│    │   Preview   │       │
+│    └─────────────┘       │
+│                          │
+│ 💡 Suggestions:          │
+│ • Break down by region   │
+│ • Show top 10 products   │
+│ • Compare to last year   │
+├──────────────────────────┤
+│ [Type your question...] 📤│
+└──────────────────────────┘
+
+FEATURES:
+- Chat bubbles (user=right, AI=left)
+- Code blocks for SQL queries (collapsible)
+- Inline chart previews
+- Loading animation during processing
+- "Add to dashboard" button on AI responses
+- Quick action chips: "Top 10", "Filter", "Group by"
+- Context awareness: "Show it by region" knows what "it" refers to
+
+CHAT CAPABILITIES:
+1. Generate visuals: "Create a pie chart of revenue by product"
+2. Query data: "What were the top 5 products last month?"
+3. Modify existing: "Change the bar chart to a line chart"
+4. Filter data: "Only show data for Q1 2024"
+5. Explain insights: "Why did sales drop in March?"
+6. Export: "Download this as Excel"
+
+─────────────────────────────────────────────────────────────
+5. BOTTOM VISUALIZATION GALLERY (60px tall, always visible)
+─────────────────────────────────────────────────────────────
+
+SMART GALLERY:
+┌──────────────────────────────────────────────────────────┐
+│ 📊 Bar  📈 Line  🥧 Pie  📋 Table  📉 Area  🔵 Scatter  │
+│ 📊 Stacked  🗺️ Map  ⚡ Gauge  🎯 Funnel  🔥 Heatmap [+] │
+└──────────────────────────────────────────────────────────┘
+
+BEHAVIOR:
+- Icons grayed out if data requirements not met
+- Hover tooltip: "Bar chart requires: 1 category + 1-5 measures"
+- Click → Add to canvas OR show field mapper modal
+- "+" button → Show all 20+ chart types in modal
+
+CHART REQUIREMENTS (Auto-validate):
+- Pie Chart: 1 category (string) + 1 measure (number)
+- Bar Chart: 1-2 categories + 1-5 measures
+- Line Chart: 1 date/time field + 1+ measures
+- Scatter: 2 numeric measures
+- Table: Any fields
+- Map: 1 geography field (city/state/country) + 1 measure
+
+─────────────────────────────────────────────────────────────
+6. DATA CONNECTION MODALS
+─────────────────────────────────────────────────────────────
+
+MODAL 1: CSV/Excel Upload
+┌────────────────────────────────┐
+│  📁 Upload Data File           │
+│  ┌──────────────────────────┐ │
+│  │  Drag & Drop Files Here  │ │
+│  │  or click to browse      │ │
+│  │                          │ │
+│  │  Supports: .csv, .xlsx   │ │
+│  └──────────────────────────┘ │
+│                                │
+│  Selected: sales_Q1.csv (2MB) │
+│  ✓ 15,420 rows detected       │
+│  ✓ 8 columns found            │
+│                                │
+│  [Preview Data] [Upload] [Cancel]│
+└────────────────────────────────┘
+
+MODAL 2: SQL Connection
+┌────────────────────────────────┐
+│  🗄️ Connect to Database        │
+│                                │
+│  Database Type:                │
+│  ⦿ MySQL  ○ PostgreSQL        │
+│  ○ SQL Server  ○ SQLite       │
+│                                │
+│  Host: [localhost]             │
+│  Port: [3306]                  │
+│  Database: [sales_db]          │
+│  Username: [root]              │
+│  Password: [••••••]            │
+│                                │
+│  [Test Connection] [Connect]   │
+└────────────────────────────────┘
+
+After connection → Show table picker:
+┌────────────────────────────────┐
+│  Select Tables to Import:      │
+│  ☑ sales                       │
+│  ☑ customers                   │
+│  ☐ products                    │
+│  ☐ orders                      │
+│                                │
+│  [Import Selected]             │
+└────────────────────────────────┘
+
+MODAL 3: MongoDB Connection
+┌────────────────────────────────┐
+│  🍃 Connect to MongoDB         │
+│                                │
+│  Connection String:            │
+│  [mongodb://localhost:27017]   │
+│                                │
+│  Database: [analytics]         │
+│  Collection: [events]          │
+│                                │
+│  [Connect]                     │
+└────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════
+            🛠️ TECHNICAL IMPLEMENTATION
+═══════════════════════════════════════════════════════════════
+
+─────────────────────────────────────────────────────────────
+TECH STACK:
+─────────────────────────────────────────────────────────────
+Frontend:
+✓ React 18 with hooks
+✓ Tailwind CSS for styling
+✓ Recharts for visualizations
+✓ react-grid-layout for dashboard grid
+✓ PapaParse for CSV parsing
+✓ SheetJS (xlsx) for Excel
+✓ Framer Motion for animations
+
+AI/Backend:
+✓ Anthropic Claude API for natural language processing
+✓ All data processing client-side (no backend needed for MVP)
+
+─────────────────────────────────────────────────────────────
+FILE STRUCTURE:
+─────────────────────────────────────────────────────────────
+src/
+├── App.jsx
+├── components/
+│   ├── Layout/
+│   │   ├── TopNav.jsx
+│   │   ├── LeftSidebar.jsx
+│   │   ├── RightChatPanel.jsx
+│   │   └── BottomGallery.jsx
+│   ├── DataSources/
+│   │   ├── ConnectionModal.jsx
+│   │   ├── FileUploader.jsx
+│   │   ├── SQLConnector.jsx
+│   │   ├── DataSourceTree.jsx
+│   │   └── FieldItem.jsx (draggable)
+│   ├── Canvas/
+│   │   ├── DashboardGrid.jsx
+│   │   ├── VisualCard.jsx
+│   │   └── EmptyState.jsx
+│   ├── Visualizations/
+│   │   ├── BarChartViz.jsx
+│   │   ├── LineChartViz.jsx
+│   │   ├── PieChartViz.jsx
+│   │   ├── TableViz.jsx
+│   │   └── ChartWrapper.jsx
+│   ├── Chat/
+│   │   ├── ChatInterface.jsx
+│   │   ├── MessageBubble.jsx
+│   │   ├── ChartPreview.jsx
+│   │   └── SuggestedActions.jsx
+│   └── Modals/
+│       ├── FieldMapperModal.jsx
+│       └── ExportModal.jsx
+├── utils/
+│   ├── dataParser.js (CSV/Excel parsing)
+│   ├── queryProcessor.js (data aggregation)
+│   ├── claudeAPI.js (AI integration)
+│   ├── chartValidator.js (check data requirements)
+│   └── exportHelpers.js
+├── hooks/
+│   ├── useDataSource.js
+│   ├── useChat.js
+│   └── useDashboard.js
+└── context/
+    └── AppContext.jsx (global state)
+
+─────────────────────────────────────────────────────────────
+CORE FUNCTIONALITY FLOWS:
+─────────────────────────────────────────────────────────────
+
+FLOW 1: Manual Chart Creation (Power BI style)
+1. User drags "revenue" field from sidebar
+2. System prompts: "Choose a visualization"
+3. User clicks "Bar Chart" from gallery
+4. Field mapper appears: "Assign to X-axis or Y-axis?"
+5. User assigns fields
+6. Chart renders on canvas
+7. User can resize/move/edit
+
+FLOW 2: AI-Assisted Creation
+1. User types: "Show me top 10 products by revenue"
+2. Send to Claude API with schema:
+System: You are a BI assistant. Dataset schema:
+
+product (string)
+revenue (number)
+date (date)
+region (string)
+
+User query: "Show me top 10 products by revenue"
+Return JSON:
+{
+"intent": "create_visualization",
+"chart_type": "bar",
+"data_transformation": {
+"group_by": "product",
+"aggregate": {"revenue": "sum"},
+"sort": {"revenue": "desc"},
+"limit": 10
+},
+"axis_mapping": {
+"x": "product",
+"y": "revenue"
+},
+"explanation": "Created a bar chart showing the 10 products with highest total revenue"
+}
+3. Frontend executes transformation
+4. Renders chart + shows explanation in chat
+5. "Add to Dashboard" button in chat message
+
+FLOW 3: Conversational Follow-ups
+User: "Show sales by month"
+AI: [Creates line chart]
+
+User: "Now only for East region"
+AI: [Applies filter, updates chart]
+
+User: "Make it a bar chart"
+AI: [Changes chart type]
+
+Context is maintained via conversation history sent to Claude.
+
+─────────────────────────────────────────────────────────────
+DATA PROCESSING ENGINE:
+─────────────────────────────────────────────────────────────
+
+// utils/queryProcessor.js
+export function processQuery(data, transformation) {
+  let result = [...data];
+  
+  // Apply filters
+  if (transformation.filter) {
+    result = result.filter(row => 
+      evalCondition(row, transformation.filter)
+    );
+  }
+  
+  // Group and aggregate
+  if (transformation.group_by) {
+    result = groupBy(result, transformation.group_by);
+    result = aggregate(result, transformation.aggregate);
+  }
+  
+  // Sort
+  if (transformation.sort) {
+    result = sortBy(result, transformation.sort);
+  }
+  
+  // Limit
+  if (transformation.limit) {
+    result = result.slice(0, transformation.limit);
+  }
+  
+  return result;
+}
+
+─────────────────────────────────────────────────────────────
+CLAUDE API INTEGRATION:
+─────────────────────────────────────────────────────────────
+
+// utils/claudeAPI.js
+export async function queryWithClaude(userMessage, dataSchema, conversationHistory) {
+  const systemPrompt = `You are a business intelligence assistant. 
+
+Current dataset schema:
+${JSON.stringify(dataSchema, null, 2)}
+
+When the user asks for data insights or visualizations, respond with JSON in this format:
+{
+  "intent": "create_visualization" | "filter_data" | "explain_data" | "modify_chart",
+  "chart_type": "bar" | "line" | "pie" | "table" | null,
+  "data_transformation": {
+    "filter": "region === 'East'",
+    "group_by": "month",
+    "aggregate": {"revenue": "sum"},
+    "sort": {"revenue": "desc"},
+    "limit": 10
+  },
+  "axis_mapping": {
+    "x": "month",
+    "y": "revenue"
+  },
+  "explanation": "Human-friendly explanation of what was done"
+}
+
+Important:
+- Suggest appropriate chart types based on data
+- Validate that requested fields exist in schema
+- For time-series, prefer line charts
+- For comparisons, prefer bar charts
+- For proportions, prefer pie charts
+- Always provide clear explanations`;
+
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1000,
+      system: systemPrompt,
+      messages: [
+        ...conversationHistory,
+        { role: 'user', content: userMessage }
+      ]
+    })
+  });
+
+  const data = await response.json();
+  return JSON.parse(data.content[0].text);
+}
+
+─────────────────────────────────────────────────────────────
+VISUALIZATION SMART VALIDATION:
+─────────────────────────────────────────────────────────────
+
+// utils/chartValidator.js
+export function canCreateChart(chartType, selectedFields, dataSchema) {
+  const requirements = {
+    bar: {
+      categories: { min: 1, max: 2, types: ['string', 'date'] },
+      measures: { min: 1, max: 5, types: ['number'] }
+    },
+    line: {
+      categories: { min: 1, max: 1, types: ['date'] },
+      measures: { min: 1, max: 10, types: ['number'] }
+    },
+    pie: {
+      categories: { min: 1, max: 1, types: ['string'] },
+      measures: { min: 1, max: 1, types: ['number'] }
+    },
+    table: {
+      any: { min: 1, max: 999 }
+    }
+  };
+  
+  const req = requirements[chartType];
+  const categories = selectedFields.filter(f => 
+    req.categories.types.includes(dataSchema[f].type)
+  );
+  const measures = selectedFields.filter(f =>
+    req.measures.types.includes(dataSchema[f].type)
+  );
+  
+  return (
+    categories.length >= req.categories.min &&
+    categories.length <= req.categories.max &&
+    measures.length >= req.measures.min &&
+    measures.length <= req.measures.max
+  );
+}
+
+─────────────────────────────────────────────────────────────
+RESPONSIVE DESIGN:
+─────────────────────────────────────────────────────────────
+
+Desktop (1920px+): Full layout as shown
+Tablet (768-1920px): 
+  - Left sidebar collapsible
+  - Chat panel becomes overlay
+  - Canvas full width
+
+Mobile (< 768px):
+  - Stack all panels vertically
+  - Bottom gallery becomes horizontal scroll
+  - Charts render in single column
+
+═══════════════════════════════════════════════════════════════
+                  🎨 DESIGN SYSTEM
+═══════════════════════════════════════════════════════════════
+
+COLORS:
+Primary: #3b82f6 (blue-500)
+Secondary: #8b5cf6 (purple-500)
+Success: #10b981 (green-500)
+Warning: #f59e0b (amber-500)
+Danger: #ef4444 (red-500)
+
+Background: #f8fafc (slate-50)
+Sidebar: #1e293b (slate-800)
+Cards: #ffffff with shadow-lg
+Borders: #e2e8f0 (slate-200)
+
+TYPOGRAPHY:
+Font: 'Inter' from Google Fonts
+Headings: font-semibold
+Body: font-normal
+Code: 'JetBrains Mono'
+
+SPACING:
+- Section padding: 4 (16px)
+- Card padding: 6 (24px)
+- Gap between elements: 4
+- Border radius: lg (8px) for cards, md (6px) for buttons
+
+ICONS:
+Use Lucide React for all icons:
+- Database, FileSpreadsheet, Table, PieChart, BarChart, LineChart
+- MessageSquare, Sparkles, Download, Settings, etc.
+
+═══════════════════════════════════════════════════════════════
+             🚀 DEVELOPMENT ROADMAP
+═══════════════════════════════════════════════════════════════
+
+PHASE 1: Layout & UI (Build This First)
+✓ Create responsive layout with all panels
+✓ Top nav with tabs
+✓ Left sidebar with collapsible sections
+✓ Center canvas with grid system
+✓ Right chat panel (UI only, no AI yet)
+✓ Bottom visualization gallery
+✓ Modal components for data upload
+
+PHASE 2: Data Handling
+✓ CSV file upload and parsing
+✓ Excel file parsing
+✓ Data preview table
+✓ Schema detection
+✓ Field tree view with drag-and-drop
+
+PHASE 3: Manual Chart Creation
+✓ Drag field to canvas → create chart
+✓ Field mapper modal
+✓ Render bar, line, pie, table charts
+✓ Chart resize and repositioning
+✓ Chart configuration panel
+
+PHASE 4: AI Integration
+✓ Connect Claude API
+✓ Natural language query processing
+✓ Generate visualizations from chat
+✓ Conversational follow-ups
+✓ Context maintenance
+
+PHASE 5: Advanced Features
+✓ SQL database connection (bonus)
+✓ Cross-filtering (click chart → filter others)
+✓ Export to PDF/Excel
+✓ Dashboard templates
+✓ Sharing capabilities
+
+═══════════════════════════════════════════════════════════════
+           ✅ ACCEPTANCE CRITERIA
+═══════════════════════════════════════════════════════════════
+
+The application is complete when:
+1. ✓ User can upload CSV/Excel and see data preview
+2. ✓ Left sidebar shows data structure with draggable fields
+3. ✓ User can create charts by:
+   - Dragging fields to canvas
+   - Using visualization gallery
+   - Asking AI in chat
+4. ✓ Dashboard supports 4+ chart types with proper rendering
+5. ✓ AI chat can:
+   - Generate charts from natural language
+   - Answer data questions
+   - Apply filters and transformations
+6. ✓ Charts are interactive (tooltips, filters)
+7. ✓ UI is responsive and professional-looking
+8. ✓ No console errors, smooth performance
+
+═══════════════════════════════════════════════════════════════
+          🎯 START HERE - BUILD ORDER
+═══════════════════════════════════════════════════════════════
+
+Step 1: Create the layout structure
+- TopNav.jsx
+- LeftSidebar.jsx (empty for now)
+- Canvas.jsx (empty state)
+- RightChatPanel.jsx (UI only)
+- BottomGallery.jsx
+
+Step 2: Build file upload
+- FileUploader modal
+- CSV parsing with PapaParse
+- Data preview table
+
+Step 3: Add visualization
+- Integrate Recharts
+- Create BarChartViz, LineChartViz, PieChartViz
+- Test with sample data
+
+Step 4: Connect AI
+- Claude API integration
+- Chat message handling
+- Query → Chart generation
+
+Step 5: Polish
+- Add animations
+- Error handling
+- Loading states
+- Responsive design
+
+═══════════════════════════════════════════════════════════════
+
+Build this step-by-step, focusing on getting the UI layout perfect first, then adding functionality incrementally. Start with the layout and file upload, and I'll guide you through each subsequent phase.
+
+The final product should feel like a professional BI tool that anyone can use, whether they know SQL or not.
+
+📸 VISUAL REFERENCE
+Your uploaded image shows Power BI's interface - this is EXACTLY what we're replicating:
+Key Elements Visible:
+
+✅ Top ribbon with data source options
+✅ Right panel for visualizations
+✅ Central canvas area
+✅ Data import cards (Excel, SQL Server, etc.)
+
+Our Enhancements:
+
+➕ AI chat panel (like Windsurf)
+➕ Natural language querying
+➕ Auto-suggested visualizations
+➕ Conversational data exploration
+
+
+🎯 SUMMARY
+This prompt will create a production-ready BI platform that:
+
+Looks professional (Power BI-inspired design)
+Works for non-technical users (AI assistant)
+Supports multiple data sources (CSV, Excel, SQL, MongoDB)
+Enables both manual & AI-driven analysis
+Generates interactive dashboards with drag-and-drop
+
+Copy the complete prompt above into your Replit Claude instance and it will build this systematically, starting with the UI layout, then adding data handling, then AI capabilities.
+Would you like me to also create sample data files for testing, or help you set up the Claude API system prompt for optimal data analysis? Sonnet 4.5Claude
