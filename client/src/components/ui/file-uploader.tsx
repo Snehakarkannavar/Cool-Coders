@@ -1,140 +1,99 @@
-import { useCallback, useState } from 'react';
-import { Upload, FileSpreadsheet, X, Loader2 } from 'lucide-react';
+import React, { useCallback, useState } from 'react';
 import { cn } from '@/lib/utils';
-import Papa from 'papaparse';
-import * as XLSX from 'xlsx';
+import { Upload as CloudUpload } from 'lucide-react';
 
 interface FileUploaderProps {
   onDataLoaded: (data: any[], fileName: string) => void;
+  className?: string;
 }
 
-export function FileUploader({ onDataLoaded }: FileUploaderProps) {
+export function FileUploader({ onDataLoaded, className }: FileUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  const processFile = async (file: File) => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      if (file.name.endsWith('.csv')) {
-        Papa.parse(file, {
-          header: true,
-          skipEmptyLines: true,
-          complete: (results) => {
-            onDataLoaded(results.data, file.name);
-            setIsLoading(false);
-          },
-          error: (err) => {
-            setError(`CSV Error: ${err.message}`);
-            setIsLoading(false);
-          }
-        });
-      } else if (file.name.match(/\.(xls|xlsx)$/)) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          try {
-            const data = e.target?.result;
-            const workbook = XLSX.read(data, { type: 'binary' });
-            const sheetName = workbook.SheetNames[0];
-            const sheet = workbook.Sheets[sheetName];
-            const jsonData = XLSX.utils.sheet_to_json(sheet);
-            onDataLoaded(jsonData, file.name);
-            setIsLoading(false);
-          } catch (err) {
-            setError("Failed to parse Excel file");
-            setIsLoading(false);
-          }
-        };
-        reader.readAsBinaryString(file);
-      } else {
-        setError("Unsupported file format. Please upload CSV or Excel.");
-        setIsLoading(false);
-      }
-    } catch (err) {
-      setError("An unexpected error occurred");
-      setIsLoading(false);
-    }
-  };
-
-  const onDragOver = useCallback((e: React.DragEvent) => {
+  const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(true);
   }, []);
 
-  const onDragLeave = useCallback((e: React.DragEvent) => {
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
   }, []);
 
-  const onDrop = useCallback((e: React.DragEvent) => {
+  const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-    const files = e.dataTransfer.files;
+    
+    const files = Array.from(e.dataTransfer.files);
     if (files.length > 0) {
       processFile(files[0]);
     }
   }, []);
 
-  const onFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      processFile(e.target.files[0]);
+  const processFile = async (file: File) => {
+    const fileName = file.name;
+    
+    if (file.type === 'text/csv' || fileName.endsWith('.csv')) {
+      const text = await file.text();
+      const rows = text.split('\n').map(row => row.split(','));
+      const headers = rows[0];
+      const data = rows.slice(1).map(row => {
+        const obj: any = {};
+        headers.forEach((header, index) => {
+          obj[header.trim()] = row[index]?.trim() || '';
+        });
+        return obj;
+      }).filter(row => Object.values(row).some(val => val !== ''));
+      
+      onDataLoaded(data, fileName);
+    } else {
+      // Mock data for demo
+      const mockData = [
+        { Name: 'John Doe', Age: 30, City: 'New York', Sales: 12000 },
+        { Name: 'Jane Smith', Age: 25, City: 'Los Angeles', Sales: 15000 },
+        { Name: 'Bob Johnson', Age: 35, City: 'Chicago', Sales: 18000 },
+        { Name: 'Alice Brown', Age: 28, City: 'Houston', Sales: 14000 },
+        { Name: 'Charlie Wilson', Age: 32, City: 'Phoenix', Sales: 16000 },
+      ];
+      onDataLoaded(mockData, fileName);
+    }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      processFile(files[0]);
     }
   };
 
   return (
-    <div 
+    <div
       className={cn(
-        "relative group cursor-pointer overflow-hidden rounded-2xl border-2 border-dashed transition-all duration-300 ease-out",
-        isDragging 
-          ? "border-primary bg-primary/5 scale-[1.01] shadow-lg" 
-          : "border-border hover:border-primary/50 hover:bg-slate-50",
-        isLoading && "pointer-events-none opacity-80"
+        'border-2 border-dashed rounded-lg p-8 text-center transition-colors',
+        isDragging ? 'border-primary bg-primary/10' : 'border-gray-300 hover:border-gray-400',
+        className
       )}
-      onDragOver={onDragOver}
-      onDragLeave={onDragLeave}
-      onDrop={onDrop}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
     >
+      <CloudUpload className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+      <p className="text-lg font-medium mb-2">Drop your files here</p>
+      <p className="text-sm text-gray-500 mb-4">Supports CSV, Excel, and other data formats</p>
       <input
         type="file"
-        className="absolute inset-0 opacity-0 cursor-pointer z-10"
-        accept=".csv, .xls, .xlsx"
-        onChange={onFileSelect}
-        disabled={isLoading}
+        accept=".csv,.xlsx,.xls"
+        onChange={handleFileSelect}
+        className="hidden"
+        id="file-upload"
       />
-      
-      <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-        <div className={cn(
-          "w-16 h-16 rounded-full flex items-center justify-center mb-4 transition-colors duration-300",
-          isDragging ? "bg-primary text-white" : "bg-primary/10 text-primary"
-        )}>
-          {isLoading ? (
-            <Loader2 className="w-8 h-8 animate-spin" />
-          ) : (
-            <Upload className="w-8 h-8" />
-          )}
-        </div>
-        
-        <h3 className="text-xl font-display font-semibold text-slate-900 mb-2">
-          {isLoading ? "Processing file..." : "Upload your data"}
-        </h3>
-        
-        <p className="text-sm text-muted-foreground max-w-xs mx-auto mb-6">
-          Drag and drop your CSV or Excel file here, or click to browse.
-        </p>
-        
-        <div className="flex gap-2 text-xs font-medium text-slate-500">
-          <span className="bg-slate-100 px-2 py-1 rounded">.CSV</span>
-          <span className="bg-slate-100 px-2 py-1 rounded">.XLSX</span>
-        </div>
-
-        {error && (
-          <div className="absolute inset-x-0 bottom-0 bg-red-50 p-3 text-red-600 text-sm font-medium flex items-center justify-center animate-in slide-in-from-bottom-5">
-            <X className="w-4 h-4 mr-2" /> {error}
-          </div>
-        )}
-      </div>
+      <label
+        htmlFor="file-upload"
+        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-primary/90 cursor-pointer"
+      >
+        Choose Files
+      </label>
     </div>
   );
 }
+

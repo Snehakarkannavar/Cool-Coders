@@ -221,3 +221,4 @@ export function ValidationScoresCard({ scores, aiValidation }: ValidationScoresP
     </Card>
   );
 }
+

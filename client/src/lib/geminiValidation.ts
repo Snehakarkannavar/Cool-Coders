@@ -328,3 +328,4 @@ function extractListFromText(text: string, keyword: string): string[] {
   
   return items.slice(0, 5); // Return max 5 items
 }
+

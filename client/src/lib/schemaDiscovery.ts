@@ -222,3 +222,4 @@ export function generateSchemaSummary(schema: DataSchema): string {
   
   return parts.join('\n');
 }
+

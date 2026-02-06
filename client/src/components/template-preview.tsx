@@ -301,3 +301,4 @@ export function TemplatePreview({ templateId, templateName, onClose }: TemplateP
     </div>
   );
 }
+

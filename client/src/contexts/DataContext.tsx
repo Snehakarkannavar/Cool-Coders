@@ -1,60 +1,109 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 interface Column {
   id: string;
   name: string;
-  type: 'string' | 'number' | 'date';
+  type: 'string' | 'number' | 'date' | 'boolean';
+}
+
+interface DataSource {
+  id: string;
+  name: string;
+  type: 'file' | 'sql' | 'mongodb';
+  data: any[];
+  columns: Column[];
 }
 
 interface DataContextType {
   data: any[];
   columns: Column[];
-  fileName: string | null;
+  fileName: string;
+  dataSources: DataSource[];
+  activeDataSourceId: string | null;
   setData: (data: any[]) => void;
   setColumns: (columns: Column[]) => void;
-  setFileName: (name: string | null) => void;
+  setFileName: (name: string) => void;
   detectAndSetColumns: (data: any[]) => void;
+  addDataSource: (dataSource: DataSource) => void;
+  removeDataSource: (id: string) => void;
+  setActiveDataSource: (id: string) => void;
+  updateDataSourceName: (id: string, newName: string) => void;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
-function detectColumnType(values: any[]): 'string' | 'number' | 'date' {
-  const sampleValues = values.slice(0, 100).filter(v => v !== null && v !== undefined && v !== '');
-  if (sampleValues.length === 0) return 'string';
-  
-  const numericCount = sampleValues.filter(v => !isNaN(Number(v)) && v !== '').length;
-  if (numericCount / sampleValues.length > 0.8) return 'number';
-  
-  const dateCount = sampleValues.filter(v => {
-    const str = String(v);
-    return /^\d{4}-\d{2}-\d{2}/.test(str) || 
-           /^\d{1,2}\/\d{1,2}\/\d{4}/.test(str) ||
-           /^\d{1,2}-\d{1,2}-\d{4}/.test(str);
-  }).length;
-  if (dateCount / sampleValues.length > 0.8) return 'date';
-  
-  return 'string';
-}
-
 export function DataProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<any[]>([]);
   const [columns, setColumns] = useState<Column[]>([]);
-  const [fileName, setFileName] = useState<string | null>(null);
+  const [fileName, setFileName] = useState('');
+  const [dataSources, setDataSources] = useState<DataSource[]>([]);
+  const [activeDataSourceId, setActiveDataSourceId] = useState<string | null>(null);
 
-  const detectAndSetColumns = (loadedData: any[]) => {
-    if (!loadedData || loadedData.length === 0) {
+  const detectAndSetColumns = (data: any[]) => {
+    if (data.length === 0) {
       setColumns([]);
       return;
     }
 
-    const columnNames = Object.keys(loadedData[0] || {});
-    const detectedColumns: Column[] = columnNames.map(colName => ({
-      id: colName,
-      name: colName,
-      type: detectColumnType(loadedData.map(row => row[colName]))
-    }));
-    
+    const sampleRow = data[0];
+    const detectedColumns: Column[] = Object.keys(sampleRow).map(key => {
+      const value = sampleRow[key];
+      let type: 'string' | 'number' | 'date' | 'boolean' = 'string';
+      
+      if (typeof value === 'number') {
+        type = 'number';
+      } else if (typeof value === 'boolean') {
+        type = 'boolean';
+      } else if (value && !isNaN(Date.parse(value))) {
+        type = 'date';
+      }
+
+      return {
+        id: key,
+        name: key,
+        type
+      };
+    });
+
     setColumns(detectedColumns);
+  };
+
+  const addDataSource = (dataSource: DataSource) => {
+    setDataSources(prev => [...prev, dataSource]);
+    if (!activeDataSourceId) {
+      setActiveDataSourceId(dataSource.id);
+    }
+  };
+
+  const removeDataSource = (id: string) => {
+    setDataSources(prev => prev.filter(ds => ds.id !== id));
+    if (activeDataSourceId === id) {
+      const remaining = dataSources.filter(ds => ds.id !== id);
+      setActiveDataSourceId(remaining.length > 0 ? remaining[0].id : null);
+    }
+  };
+
+  const setActiveDataSource = (id: string) => {
+    setActiveDataSourceId(id);
+    const source = dataSources.find(ds => ds.id === id);
+    if (source) {
+      setData(source.data);
+      setColumns(source.columns);
+      setFileName(source.name);
+    }
+  };
+
+  const updateDataSourceName = (id: string, newName: string) => {
+    setDataSources(prev => 
+      prev.map(ds => 
+        ds.id === id ? { ...ds, name: newName } : ds
+      )
+    );
+    
+    // Update fileName if this is the active data source
+    if (activeDataSourceId === id) {
+      setFileName(newName);
+    }
   };
 
   return (
@@ -62,10 +111,16 @@ export function DataProvider({ children }: { children: ReactNode }) {
       data,
       columns,
       fileName,
+      dataSources,
+      activeDataSourceId,
       setData,
       setColumns,
       setFileName,
-      detectAndSetColumns
+      detectAndSetColumns,
+      addDataSource,
+      removeDataSource,
+      setActiveDataSource,
+      updateDataSourceName
     }}>
       {children}
     </DataContext.Provider>
@@ -74,8 +129,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
 export function useData() {
   const context = useContext(DataContext);
-  if (!context) {
-    throw new Error('useData must be used within DataProvider');
+  if (context === undefined) {
+    throw new Error('useData must be used within a DataProvider');
   }
   return context;
 }
+

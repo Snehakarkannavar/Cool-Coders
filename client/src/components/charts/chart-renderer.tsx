@@ -199,3 +199,4 @@ export function ChartRenderer({ type, data, config, title, description }: ChartR
     </Card>
   );
 }
+
