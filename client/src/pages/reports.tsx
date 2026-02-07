@@ -19,8 +19,11 @@ import {
   Visibility as EyeIcon,
   Stars as AwardIcon,
   Delete as TrashIcon,
-  CalendarToday as CalendarIcon
+  CalendarToday as CalendarIcon,
+  ArrowBack as ArrowLeftIcon
 } from '@mui/icons-material';
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -125,6 +128,7 @@ export default function ReportsPage() {
   const [isDragging, setIsDragging] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationProgress, setGenerationProgress] = useState('');
+  const [userInstructions, setUserInstructions] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   // View reports state
@@ -138,7 +142,7 @@ export default function ReportsPage() {
   // Template preview state
   const [previewTemplate, setPreviewTemplate] = useState<string | null>(null);
   
-  const geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY;
+  const geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyBcxNybNgV_800Eoo8Eq3JgS2IDd8VHcfg';
 
   // Load saved reports on mount
   useState(() => {
@@ -335,9 +339,9 @@ export default function ReportsPage() {
       </div>
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <Tabs value={activeTab} onValueChange={(v: any) => setActiveTab(v)} className="flex-1 flex flex-col">
-          <div className="bg-white border-b border-[#e1dfdd] px-6 pt-4">
+      <div className="flex-1 overflow-hidden flex flex-col">
+        <Tabs value={activeTab} onValueChange={(v: any) => setActiveTab(v)} className="flex-1 flex flex-col overflow-hidden">
+          <div className="bg-white border-b border-[#e1dfdd] px-6 pt-4 flex-shrink-0">
             <TabsList className="bg-transparent border-b-0 h-auto p-0">
               <TabsTrigger 
                 value="generate" 
@@ -360,8 +364,8 @@ export default function ReportsPage() {
           </div>
 
           {/* Generate Report Tab */}
-          <TabsContent value="generate" className="flex-1 overflow-auto mt-0 p-6">
-            <div className="max-w-7xl mx-auto space-y-6">
+          <TabsContent value="generate" className="flex-1 overflow-y-auto mt-0 p-6 space-y-6">
+            <div className="max-w-7xl mx-auto space-y-6 pb-8">
               {/* Upload Area */}
               <Card className="border-[#e1dfdd] shadow-sm">
                 <div className="p-6">
@@ -555,8 +559,34 @@ export default function ReportsPage() {
                 </div>
               </Card>
 
-              {/* Generate Action */}
+              {/* User Instructions */}
               <Card className="border-[#e1dfdd] shadow-sm">
+                <div className="p-6">
+                  <h3 className="font-semibold text-[#323130] mb-4 flex items-center gap-2">
+                    <FileTextIcon className="h-5 w-5 text-[#d13438]" />
+                    Report Focus & Instructions
+                  </h3>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="instructions" className="text-sm text-[#605e5c]">
+                      Provide specific details on what the report should focus on (optional)
+                    </Label>
+                    <Textarea
+                      id="instructions"
+                      value={userInstructions}
+                      onChange={(e) => setUserInstructions(e.target.value)}
+                      placeholder="E.g., Focus on sales trends in Q4, analyze customer retention patterns, highlight regional performance differences..."
+                      className="min-h-[120px] resize-none bg-white border-[#e1dfdd] focus:border-[#2E8B57] focus:ring-[#2E8B57]"
+                    />
+                    <p className="text-xs text-[#605e5c] mt-1">
+                      💡 Tip: Be specific about metrics, time periods, or comparisons you want to see in your report
+                    </p>
+                  </div>
+                </div>
+              </Card>
+
+              {/* Generate Action */}
+              <Card className="border-[#e1dfdd] shadow-sm bg-gradient-to-r from-[#d4f1e5] to-[#f3f0f7]">
                 <div className="p-6 flex items-center justify-between">
                   <div>
                     <p className="font-medium text-[#323130]">
@@ -565,6 +595,7 @@ export default function ReportsPage() {
                     <p className="text-sm text-[#605e5c]">
                       Format: {outputFormats.find(f => f.id === selectedFormat)?.name} • 
                       Template: {reportTemplates.find(t => t.id === selectedTemplate)?.name}
+                      {userInstructions && ' • Custom instructions provided'}
                     </p>
                     {generationProgress && (
                       <p className="text-sm text-[#2E8B57] mt-1 flex items-center gap-2">
@@ -576,16 +607,16 @@ export default function ReportsPage() {
                   <Button 
                     onClick={handleGenerateReport}
                     disabled={selectedSources.length === 0 || isGenerating}
-                    className="bg-[#2E8B57] hover:bg-[#1e6f4f]"
+                    className="bg-[#2E8B57] hover:bg-[#1e6f4f] h-12 px-8 text-base font-semibold"
                   >
                     {isGenerating ? (
                       <>
-                        <LoaderIcon className="h-4 w-4 mr-2 animate-spin" />
+                        <LoaderIcon className="h-5 w-5 mr-2 animate-spin" />
                         Generating...
                       </>
                     ) : (
                       <>
-                        <BarChartIcon className="h-4 w-4 mr-2" />
+                        <BarChartIcon className="h-5 w-5 mr-2" />
                         Generate Report
                       </>
                     )}
@@ -639,9 +670,9 @@ export default function ReportsPage() {
           </TabsContent>
 
           {/* View Reports Tab */}
-          <TabsContent value="view" className="flex-1 overflow-auto mt-0 p-6">
+          <TabsContent value="view" className="flex-1 overflow-y-auto mt-0 p-6">
             {reports.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-center">
+              <div className="flex flex-col items-center justify-center min-h-[500px] text-center">
                 <FileTextIcon className="h-16 w-16 text-[#a19f9d] mb-4" />
                 <h3 className="text-lg font-semibold text-[#323130] mb-2">
                   No Reports Yet
@@ -653,11 +684,30 @@ export default function ReportsPage() {
                   onClick={() => setActiveTab('generate')}
                   className="bg-[#2E8B57] hover:bg-[#1e6f4f]"
                 >
+                  <PlusIcon className="h-4 w-4 mr-2" />
                   Generate Your First Report
                 </Button>
               </div>
             ) : (
-              <div className="max-w-6xl mx-auto">
+              <div className="max-w-6xl mx-auto pb-8">
+                <div className="mb-6 flex items-center justify-between">
+                  <div>
+                    <h2 className="text-2xl font-bold text-[#323130]">Your Reports</h2>
+                    <p className="text-sm text-[#605e5c] mt-1">
+                      {reports.length} report{reports.length !== 1 ? 's' : ''} generated
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setActiveTab('generate')}
+                    className="border-[#2E8B57] text-[#2E8B57] hover:bg-[#d4f1e5]"
+                  >
+                    <PlusIcon className="h-4 w-4 mr-2" />
+                    Generate New Report
+                  </Button>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {reports.map((report) => (
                     <Card

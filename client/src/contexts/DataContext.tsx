@@ -69,9 +69,30 @@ export function DataProvider({ children }: { children: ReactNode }) {
   };
 
   const addDataSource = (dataSource: DataSource) => {
-    setDataSources(prev => [...prev, dataSource]);
+    console.log('📊 DataContext - Adding data source:', {
+      id: dataSource.id,
+      name: dataSource.name,
+      type: dataSource.type,
+      rows: dataSource.data?.length || 0,
+      columns: dataSource.columns?.length || 0
+    });
+    
+    setDataSources(prev => {
+      const updated = [...prev, dataSource];
+      console.log('📊 DataContext - Updated data sources:', updated.map(ds => ({
+        id: ds.id,
+        name: ds.name,
+        rows: ds.data?.length || 0
+      })));
+      return updated;
+    });
+    
     if (!activeDataSourceId) {
+      console.log('📊 DataContext - Setting as active data source:', dataSource.id);
       setActiveDataSourceId(dataSource.id);
+      setData(dataSource.data);
+      setColumns(dataSource.columns);
+      setFileName(dataSource.name);
     }
   };
 

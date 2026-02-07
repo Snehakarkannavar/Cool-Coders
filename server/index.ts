@@ -78,10 +78,9 @@ app.use((req, res, next) => {
     return res.status(status).json({ message });
   });
 
-  // Connect to MongoDB
-  connectToMongoDB().catch(err => {
-    console.error('Failed to connect to MongoDB:', err);
-    // Server continues without MongoDB (uses localStorage fallback)
+  // Connect to MongoDB (optional)
+  connectToMongoDB().catch(() => {
+    // MongoDB is optional - server continues with file storage
   });
 
   // Register MongoDB API routes

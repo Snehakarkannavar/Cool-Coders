@@ -321,5 +321,5 @@ export function registerMongoDBRoutes(app: Express) {
     }
   });
   
-  console.log('✅ MongoDB API routes registered');
+  console.log('[MongoDB] API routes registered');
 }

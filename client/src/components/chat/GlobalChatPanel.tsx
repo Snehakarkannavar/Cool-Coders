@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useData } from '@/contexts/DataContext';
 import { useChat } from '@/contexts/ChatContext';
 import { useKeyboardShortcuts, useEscapeToClose } from '@/hooks/use-keyboard-shortcuts';
-import { dataAnalysisService } from '@/lib/dataAnalysisService';
 import { askGemini } from '@/lib/geminiChatService';
 import { useLocation } from 'wouter';
 import { Card, CardContent } from '@/components/ui/card';
@@ -24,7 +23,14 @@ import {
   AutoAwesome as SparkleIcon,
   Close as CloseIcon,
   Refresh as RefreshIcon,
-  DragIndicator as GripVerticalIcon
+  DragIndicator as GripVerticalIcon,
+  Warning as WarningIcon,
+  Error as ErrorIcon,
+  Rocket as RocketIcon,
+  TrendingUp as TrendingUpIcon,
+  BarChart as BarChartIcon,
+  Lightbulb as LightbulbIcon,
+  AttachmentOutlined as AttachmentIcon
 } from '@mui/icons-material';
 import { cn } from '@/lib/utils';
 
@@ -97,7 +103,7 @@ export function GlobalChatPanel() {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      content: '👋 Hi! I\'m your AI Data Assistant powered by Gemini.\\n\\n**I can help you:**\\n• 📊 Analyze your datasets with detailed statistics\\n• 📈 Recommend and create visualizations\\n• 📑 Generate comprehensive reports\\n• 💡 Find insights and patterns in your data\\n• 📎 Process attachments and documents\\n\\n**Try asking me:**\\n• "Show me summary statistics"\\n• "Create a visualization"\\n• "Generate a detailed report"\\n• "Find insights in my data"\\n\\nWhat would you like to explore?',
+      content: 'Hi! I\'m your AI Data Assistant.\\n\\n**I can help you:**\\n• Analyze datasets with detailed statistics\\n• Recommend and create visualizations\\n• Generate comprehensive reports\\n• Find insights and patterns in data\\n\\n**Getting Started:**\\n1. Upload a CSV file from the Dashboard page\\n2. Select your dataset from the dropdown above\\n3. Ask me questions about your data\\n\\n**Try asking:**\\n• "How many rows are in my dataset?"\\n• "Show me summary statistics"\\n• "What are the columns?"\\n• "Find insights and patterns"\\n\\n**Note:** Currently, only CSV files are supported for data analysis.',
       sender: 'assistant',
       timestamp: new Date()
     }
@@ -116,6 +122,50 @@ export function GlobalChatPanel() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const resizeRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+
+  // Sync selectedDataSource with activeDataSourceId when it changes
+  useEffect(() => {
+    if (activeDataSourceId && activeDataSourceId !== selectedDataSource) {
+      console.log('🔄 Syncing selectedDataSource with activeDataSourceId:', activeDataSourceId);
+      setSelectedDataSource(activeDataSourceId);
+    }
+  }, [activeDataSourceId]);
+  
+  // Auto-select newly uploaded data source
+  useEffect(() => {
+    if (dataSources.length > 0) {
+      if (selectedDataSource === 'all' || selectedDataSource === 'none') {
+        const latestSource = dataSources[dataSources.length - 1];
+        console.log('🔄 Auto-selecting latest data source:', latestSource.name, 'ID:', latestSource.id);
+        setSelectedDataSource(latestSource.id);
+        
+        const dataDetectedMessage: Message = {
+          id: `data-detected-${Date.now()}`,
+          content: `**Dataset Detected!**\\n\\n✓ Auto-selected: **${latestSource.name}**\\n• ${latestSource.data?.length || 0} rows\\n• ${latestSource.columns?.length || 0} columns\\n\\nYou can now ask me questions about your data!`,
+          sender: 'assistant',
+          timestamp: new Date()
+        };
+        
+        setMessages(prev => {
+          const hasRecentDataMessage = prev.some(msg => 
+            msg.content.includes('Dataset Detected') && 
+            Date.now() - msg.timestamp.getTime() < 5000
+          );
+          if (hasRecentDataMessage) return prev;
+          return [...prev, dataDetectedMessage];
+        });
+      } else if (!dataSources.find(ds => ds.id === selectedDataSource)) {
+        const firstSource = dataSources[0];
+        console.log('🔄 Selected source not found, selecting first available:', firstSource.name);
+        setSelectedDataSource(firstSource.id);
+      }
+    } else {
+      if (selectedDataSource !== 'all') {
+        console.log('🔄 No data sources, resetting to "all"');
+        setSelectedDataSource('all');
+      }
+    }
+  }, [dataSources]);
 
   const suggestedCommands = [
     'Show me summary statistics for my data',
@@ -175,12 +225,6 @@ export function GlobalChatPanel() {
     scrollToBottom();
   }, [messages]);
 
-  useEffect(() => {
-    if (activeDataSourceId && activeDataSourceId !== selectedDataSource) {
-      setSelectedDataSource(activeDataSourceId);
-    }
-  }, [activeDataSourceId]);
-
   const handleSendMessage = async () => {
     if (!inputText.trim()) return;
 
@@ -201,20 +245,6 @@ export function GlobalChatPanel() {
     setIsLoading(true);
 
     try {
-      // Get current data and columns
-      let currentData = data;
-      let currentColumns = columns;
-      let dataSourceName = 'your dataset';
-      
-      if (selectedDataSource !== 'all') {
-        const selectedSource = dataSources.find(ds => ds.id === selectedDataSource);
-        if (selectedSource) {
-          currentData = selectedSource.data;
-          currentColumns = selectedSource.columns;
-          dataSourceName = selectedSource.name;
-        }
-      }
-
       // Handle attachments
       if (currentAttachments.length > 0) {
         const attachmentInfo = currentAttachments.map(att => 
@@ -223,7 +253,7 @@ export function GlobalChatPanel() {
         
         const attachmentResponse: Message = {
           id: (Date.now() + 1).toString(),
-          content: `📎 Received ${currentAttachments.length} attachment(s):\\n${attachmentInfo}\\n\\nProcessing the content now...`,
+          content: `Received ${currentAttachments.length} attachment(s):\\n${attachmentInfo}\\n\\nProcessing the content now...`,
           sender: 'assistant',
           timestamp: new Date()
         };
@@ -231,11 +261,47 @@ export function GlobalChatPanel() {
         await new Promise(resolve => setTimeout(resolve, 800));
       }
 
+      // Get current data and columns
+      let currentData = null;
+      let currentColumns: any[] = [];
+      let dataSourceName = 'your dataset';
+      
+      // Try to get data from selected source first
+      if (selectedDataSource !== 'all') {
+        const selectedSource = dataSources.find(ds => ds.id === selectedDataSource);
+        
+        if (selectedSource) {
+          currentData = selectedSource.data;
+          currentColumns = selectedSource.columns;
+          dataSourceName = selectedSource.name;
+        }
+      }
+      
+      // Fallback: If no data found yet, try other sources
+      if (!currentData || currentData.length === 0) {
+        if (dataSources && dataSources.length > 0) {
+          const firstSource = dataSources[0];
+          currentData = firstSource.data;
+          currentColumns = firstSource.columns;
+          dataSourceName = firstSource.name;
+        } else if (data && data.length > 0) {
+          currentData = data;
+          currentColumns = columns;
+          dataSourceName = 'uploaded dataset';
+        }
+      }
+
       // Check if data exists
       if (!currentData || currentData.length === 0) {
+        const debugInfo = dataSources && dataSources.length > 0 
+          ? `\\n\\n**Debug Info:**\\n• Found ${dataSources.length} data sources\\n• Names: ${dataSources.map(ds => ds.name).join(', ')}\\n• Please select a specific data source from the dropdown above`
+          : data && data.length > 0
+          ? `\\n\\n**Debug Info:**\\n• Found global data with ${data.length} rows\\n• This might be a context issue - trying to reload...`
+          : `\\n\\n**How to fix this:**\\n1. Go to the **Dashboard** page (home icon on left sidebar)\\n2. Click the **Upload Dataset** button or drag & drop a **CSV file**\\n3. After upload, return here and select your dataset from the dropdown above\\n4. Then ask your questions!\\n\\n**Note:** Only CSV files are currently supported. DOCX/Word files cannot be analyzed for data.`;
+
         const noDataMessage: Message = {
           id: (Date.now() + 2).toString(),
-          content: '⚠️ No data available to analyze. Please upload a dataset or connect to a data source first.',
+          content: `**No data available to analyze**\\n\\nI can't find any dataset to work with. Please upload a CSV dataset first.${debugInfo}`,
           sender: 'assistant',
           timestamp: new Date()
         };
@@ -244,13 +310,13 @@ export function GlobalChatPanel() {
         return;
       }
 
-      // Get Gemini API key from environment
-      const geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      // Get Gemini API key from environment with fallback
+      const geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyBcxNybNgV_800Eoo8Eq3JgS2IDd8VHcfg';
       
       if (!geminiApiKey) {
         const errorMessage: Message = {
           id: (Date.now() + 2).toString(),
-          content: '⚠️ **Gemini API Key Missing**\\n\\nTo enable AI-powered analysis, please add your Gemini API key to the .env file:\\n\\n`VITE_GEMINI_API_KEY=your_api_key_here`\\n\\nGet your free API key from: https://makersuite.google.com/app/apikey',
+          content: '**API Key Required**\\n\\nPlease add your Gemini API key to your `.env` file:\\n\\n`VITE_GEMINI_API_KEY=your_actual_api_key_here`\\n\\nGet a free API key at: https://makersuite.google.com/app/apikey\\n\\nAfter adding the key, restart your development server.',
           sender: 'assistant',
           timestamp: new Date()
         };
@@ -260,55 +326,77 @@ export function GlobalChatPanel() {
       }
 
       // Call Gemini AI with the dataset and user query
-      console.log('📤 Sending query to Gemini with dataset:', {
-        name: dataSourceName,
+      console.log('Sending query to Gemini:', {
+        query: currentQuery,
+        dataSourceName,
         rows: currentData.length,
         columns: currentColumns.length
       });
 
-      const geminiResponse = await askGemini(
-        currentQuery,
-        {
-          name: dataSourceName,
-          data: currentData,
-          columns: currentColumns
-        },
-        geminiApiKey
-      );
+      try {
+        const geminiResponse = await askGemini(
+          currentQuery,
+          {
+            name: dataSourceName,
+            data: currentData,
+            columns: currentColumns
+          },
+          geminiApiKey
+        );
 
-      // Display Gemini's response
-      const aiMessage: Message = {
-        id: (Date.now() + 3).toString(),
-        content: geminiResponse.response,
-        sender: 'assistant',
-        timestamp: new Date()
-      };
+        // Display Gemini's response
+        const aiMessage: Message = {
+          id: (Date.now() + 3).toString(),
+          content: geminiResponse.response,
+          sender: 'assistant',
+          timestamp: new Date()
+        };
 
-      setMessages(prev => [...prev, aiMessage]);
+        setMessages(prev => [...prev, aiMessage]);
 
-      // Navigate to visual builder if Gemini suggests visualization
-      if (geminiResponse.shouldNavigateToVisualBuilder) {
-        setTimeout(() => {
-          const navMessage: Message = {
-            id: (Date.now() + 10).toString(),
-            content: '🚀 **Let\'s create your visualization!**\\n\\nI\'ll take you to the Visual Builder where you can create charts interactively.',
-            sender: 'assistant',
-            timestamp: new Date()
-          };
-          setMessages(prev => [...prev, navMessage]);
-          
-          // Navigate to visual builder after showing message
+        // Navigate to visual builder if Gemini suggests visualization
+        if (geminiResponse.shouldNavigateToVisualBuilder) {
           setTimeout(() => {
-            setLocation('/visual-builder');
-          }, 1500);
-        }, 1000);
+            const navMessage: Message = {
+              id: (Date.now() + 10).toString(),
+              content: '**Create Visualization**\\n\\nI\'ll take you to the Visual Builder where you can create charts interactively.',
+              sender: 'assistant',
+              timestamp: new Date()
+            };
+            setMessages(prev => [...prev, navMessage]);
+            
+            setTimeout(() => {
+              setLocation('/visual-builder');
+            }, 1500);
+          }, 1000);
+        }
+      } catch (geminiError: any) {
+        console.error('Gemini API error:', geminiError);
+        
+        let errorMessage = 'Failed to communicate with Gemini AI.';
+        
+        if (geminiError.message?.includes('API_KEY_INVALID')) {
+          errorMessage = 'Invalid API key. Please check your Gemini API key in the `.env` file.';
+        } else if (geminiError.message?.includes('quota')) {
+          errorMessage = 'API quota exceeded. Please check your Gemini API usage limits.';
+        } else if (geminiError.message) {
+          errorMessage = geminiError.message;
+        }
+        
+        const geminiErrorMessage: Message = {
+          id: (Date.now() + 4).toString(),
+          content: `**Gemini API Error**\\n\\n${errorMessage}\\n\\n**Troubleshooting:**\\n• Verify your API key is correct\\n• Check if you have quota remaining\\n• Ensure your API key has the necessary permissions`,
+          sender: 'assistant',
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, geminiErrorMessage]);
       }
 
     } catch (error: any) {
-      console.error('❌ AI response error:', error);
+      console.error('General error in handleSendMessage:', error);
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: `❌ **Error communicating with AI**\\n\\n${error.message || 'Unknown error occurred'}\\n\\nPlease check:\\n• Your Gemini API key is valid\\n• You have internet connection\\n• The dataset is properly loaded`,
+        content: `**Error processing your request**\\n\\n${error.message || 'Unknown error occurred'}\\n\\nPlease try again or rephrase your question.`,
         sender: 'assistant',
         timestamp: new Date()
       };
@@ -354,7 +442,7 @@ export function GlobalChatPanel() {
   const clearChat = () => {
     setMessages([{
       id: '1',
-      content: '👋 Hi! I\'m your AI Data Assistant powered by Gemini.\\n\\n**I can help you:**\\n• 📊 Analyze your datasets with detailed statistics\\n• 📈 Recommend and create visualizations\\n• 📑 Generate comprehensive reports\\n• 💡 Find insights and patterns in your data\\n• 📎 Process attachments and documents\\n\\n**Try asking me:**\\n• "Show me summary statistics"\\n• "Create a visualization"\\n• "Generate a detailed report"\\n• "Find insights in my data"\\n\\nWhat would you like to explore?',
+      content: 'Hi! I\'m your AI Data Assistant.\\n\\n**I can help you:**\\n• Analyze datasets with detailed statistics\\n• Recommend and create visualizations\\n• Generate comprehensive reports\\n• Find insights and patterns in data\\n\\n**Try asking:**\\n• "Show me summary statistics"\\n• "Create a visualization"\\n• "Generate a report"\\n• "Find insights"\\n\\nWhat would you like to explore?',
       sender: 'assistant',
       timestamp: new Date()
     }]);
@@ -377,7 +465,6 @@ export function GlobalChatPanel() {
   // Full chat panel when open
   return (
     <>
-      {/* Resize overlay */}
       {isResizing && (
         <div className="fixed inset-0 z-[60] bg-black/10 cursor-col-resize" />
       )}
@@ -394,218 +481,6 @@ export function GlobalChatPanel() {
           className="absolute left-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-[#2E8B57] transition-colors group"
         >
           <div className="absolute inset-0 w-0.5 bg-transparent group-hover:bg-[#2E8B57]/50 mx-auto" />
-        </div>
-
-
-          numericCols.slice(0, 3).forEach(col => {
-            const values = currentData.map(row => Number(row[col.name])).filter(v => !isNaN(v) && v !== null);
-            if (values.length > 0) {
-              const sum = values.reduce((a, b) => a + b, 0);
-              const avg = sum / values.length;
-              const min = Math.min(...values);
-              const max = Math.max(...values);
-              const sorted = [...values].sort((a, b) => a - b);
-              const median = values.length % 2 === 0 
-                ? (sorted[values.length / 2 - 1] + sorted[values.length / 2]) / 2 
-                : sorted[Math.floor(values.length / 2)];
-              
-              response += `\\n**${col.name}**\\n`;
-              response += `  ▸ Average: ${avg.toFixed(2)}\\n`;
-              response += `  ▸ Median: ${median.toFixed(2)}\\n`;
-              response += `  ▸ Min: ${min.toLocaleString()}\\n`;
-              response += `  ▸ Max: ${max.toLocaleString()}\\n`;
-              response += `  ▸ Range: ${(max - min).toLocaleString()}\\n`;
-            }
-          });
-          response += '\\n';
-        }
-        
-        // Analyze categorical columns
-        if (stringCols.length > 0) {
-          response += `**📑 Categorical Analysis**\\n`;
-          stringCols.slice(0, 3).forEach(col => {
-            const values = currentData.map(row => row[col.name]).filter(v => v !== null && v !== '');
-            const unique = Array.from(new Set(values));
-            const topValues = Object.entries(
-              values.reduce((acc: any, val) => {
-                acc[val] = (acc[val] || 0) + 1;
-                return acc;
-              }, {})
-            ).sort((a: any, b: any) => b[1] - a[1]).slice(0, 3);
-            
-            response += `\n**${col.name}**\n`;
-            response += `  ▸ Unique Values: ${unique.length}\n`;
-            response += `  ▸ Most Common: ${topValues.map((v: any) => v[0] + ' (' + v[1] + ')').join(', ')}\n`;
-          });
-        }
-        
-      } else if (currentQuery.includes('insight') || currentQuery.includes('analyze') || currentQuery.includes('find')) {
-        response = `💡 **Data Insights: ${dataSourceName}**\\n\\n`;
-        
-        // Data quality insights
-        const nullCounts = currentColumns.map(col => {
-          const nulls = currentData.filter(row => row[col.name] === null || row[col.name] === '' || row[col.name] === undefined).length;
-          return { column: col.name, nulls, percentage: (nulls / currentData.length * 100).toFixed(1) };
-        }).filter(r => r.nulls > 0);
-        
-        if (nullCounts.length > 0) {
-          response += `⚠️ **Data Quality**\\n`;
-          nullCounts.slice(0, 3).forEach(item => {
-            response += `• ${item.column}: ${item.nulls} missing values (${item.percentage}%)\\n`;
-          });
-          response += '\\n';
-        }
-        
-        // Numeric insights
-        if (numericCols.length >= 2) {
-          response += `📈 **Potential Correlations**\\n`;
-          response += `• Compare ${numericCols[0].name} with ${numericCols[1].name}\\n`;
-          if (numericCols.length >= 3) {
-            response += `• Analyze ${numericCols[2].name} relationships\\n`;
-          }
-          response += '\\n';
-        }
-        
-        // Distribution insights
-        if (stringCols.length > 0) {
-          const col = stringCols[0];
-          const values = currentData.map(row => row[col.name]);
-          const unique = Array.from(new Set(values));
-          response += `📊 **Distribution Insights**\\n`;
-          response += `• ${col.name} has ${unique.length} unique values\\n`;
-          if (unique.length <= 20) {
-            response += `• Suitable for categorical analysis\\n`;
-          }
-          response += '\\n';
-        }
-        
-        response += '**Next Steps:** Create visualizations, export reports, or ask for specific analysis!';
-        
-      } else {
-        // General query
-        response = `🤖 **Analysis Complete**\\n\\n`;
-        response += `I've analyzed **${dataSourceName}** with ${currentData.length} records.\\n\\n`;
-        response += `**Quick Stats:**\\n`;
-        response += `• ${numericCols.length} numeric columns for calculations\\n`;
-        response += `• ${stringCols.length} text columns for categories\\n`;
-        response += `• ${dateCols.length} date columns for trends\\n\\n`;
-        
-        if (numericCols.length > 0) {
-          const col = numericCols[0];
-          const values = currentData.map(row => Number(row[col.name])).filter(v => !isNaN(v));
-          const avg = values.reduce((a, b) => a + b, 0) / values.length;
-          response += `**Example: ${col.name}**\\n`;
-          response += `Average value: ${avg.toFixed(2)}\\n\\n`;
-        }
-        
-        response += `💬 **What would you like to do?**\\n`;
-        response += `• "Show statistics" - Detailed analysis\\n`;
-        response += `• "Create a visual" - Build charts\\n`;
-        response += `• "Find insights" - Discover patterns\\n`;
-        response += `• "Generate report" - Full summary`;
-      }
-     
-      const aiMessage: Message = {
-        id: (Date.now() + 3).toString(),
-        content: response,
-        sender: 'assistant',
-        timestamp: new Date()
-      };
-
-      setMessages(prev => [...prev, aiMessage]);
-
-    } catch (error) {
-      console.error('AI response error:', error);
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        content: '❌ Sorry, I encountered an error analyzing your data. Please make sure your dataset is properly loaded and try again.',
-        sender: 'assistant',
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, errorMessage]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const getDataSourceName = (sourceId: string): string => {
-    if (sourceId === 'all') return 'all data sources';
-    const source = dataSources.find(ds => ds.id === sourceId);
-    return source ? source.name : 'selected data source';
-  };
-
-  const handleFileAttachment = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (!files) return;
-
-    Array.from(files).forEach(file => {
-      const fileType = file.type.startsWith('image/') ? 'image'
-                     : file.type.startsWith('video/') ? 'video'
-                     : 'document';
-     
-      const url = URL.createObjectURL(file);
-     
-      setAttachments(prev => [...prev, {
-        type: fileType,
-        name: file.name,
-        url
-      }]);
-    });
-  };
-
-  const removeAttachment = (index: number) => {
-    setAttachments(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const handleSuggestedCommand = (command: string) => {
-    setInputText(command);
-  };
-
-  const clearChat = () => {
-    setMessages([{
-      id: '1',
-      content: '👋 Hi! I\'m your AI Data Assistant powered by Gemini.\\n\\n**I can help you:**\\n• 📊 Analyze your datasets with detailed statistics\\n• 📈 Recommend and create visualizations\\n• 📑 Generate comprehensive reports\\n• 💡 Find insights and patterns in your data\\n• 📎 Process attachments and documents\\n\\n**Try asking me:**\\n• "Show me summary statistics"\\n• "Create a visualization"\\n• "Generate a detailed report"\\n• "Find insights in my data"\\n\\nWhat would you like to explore?',
-      sender: 'assistant',
-      timestamp: new Date()
-    }]);
-  };
-
-  // Floating toggle button when closed
-  if (!isChatOpen) {
-    return (
-      <div className="fixed right-6 bottom-6 z-50">
-        <Button
-          onClick={toggleChat}
-          className="bg-[#2E8B57] hover:bg-[#1e6f4f] text-white rounded-full w-14 h-14 shadow-lg transition-all duration-200 hover:scale-105"
-        >
-          <AiIcon className="w-6 h-6" />
-        </Button>
-      </div>
-    );
-  }
-
-  // Full chat panel when open
-  return (
-    <>
-      {/* Resize overlay */}
-      {isResizing && (
-        <div className="fixed inset-0 z-[60] bg-black/10 cursor-col-resize" />
-      )}
-      
-      <div 
-        ref={panelRef}
-        className="fixed right-0 top-0 bottom-0 z-50 bg-white shadow-2xl border-l border-gray-200 flex flex-col"
-        style={{ width: chatWidth }}
-      >
-        {/* Resize handle */}
-        <div
-          ref={resizeRef}
-          onMouseDown={handleMouseDown}
-          className="absolute left-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-[#2E8B57] transition-colors group"
-        >
-          <div className="absolute left-1 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
-            <GripVerticalIcon className="w-4 h-4 text-gray-400" />
-          </div>
         </div>
 
         {/* Header */}
@@ -644,20 +519,58 @@ export function GlobalChatPanel() {
           <div className="flex items-center gap-2">
             <DatasetIcon className="w-4 h-4 text-[#2E8B57]" />
             <span className="text-xs font-medium">Data Source:</span>
-            <Select value={selectedDataSource} onValueChange={setSelectedDataSource}>
-              <SelectTrigger className="h-7 text-xs">
-                <SelectValue />
+            <Select 
+              value={selectedDataSource} 
+              onValueChange={(value) => {
+                setSelectedDataSource(value);
+                
+                const selectedSource = dataSources.find(ds => ds.id === value);
+                if (selectedSource) {
+                  const confirmMessage: Message = {
+                    id: `source-changed-${Date.now()}`,
+                    content: `**Data source changed to:**\\n${selectedSource.name} (${selectedSource.data?.length || 0} rows)`,
+                    sender: 'assistant',
+                    timestamp: new Date()
+                  };
+                  setMessages(prev => [...prev, confirmMessage]);
+                }
+              }}
+            >
+              <SelectTrigger className="h-7 text-xs flex-1">
+                <SelectValue placeholder={dataSources?.length === 0 ? "No data uploaded yet" : "Select data source"} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Data Sources</SelectItem>
-                {dataSources.map((source) => (
-                  <SelectItem key={source.id} value={source.id}>
-                    {source.name}
+                {dataSources?.length === 0 ? (
+                  <SelectItem value="none" disabled>
+                    No data sources - Upload a CSV file first
                   </SelectItem>
-                ))}
+                ) : (
+                  <>
+                    {dataSources?.map((source) => (
+                      <SelectItem key={source.id} value={source.id}>
+                        {source.name} ({source.data?.length || 0} rows)
+                      </SelectItem>
+                    ))}
+                    <SelectItem value="all">All Data Sources ({dataSources?.length || 0})</SelectItem>
+                  </>
+                )}
               </SelectContent>
             </Select>
           </div>
+          {dataSources?.length === 0 ? (
+            <div className="mt-2 px-2 py-1 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-800">
+              ⚠️ No data uploaded. Go to Dashboard to upload a CSV file.
+            </div>
+          ) : (
+            <div className="mt-2 text-xs text-green-700 bg-green-50 px-2 py-1 rounded flex items-center justify-between">
+              <span>✓ {dataSources?.length} dataset{dataSources?.length !== 1 ? 's' : ''} available</span>
+              {selectedDataSource && selectedDataSource !== 'all' && (
+                <span className="font-medium">
+                  Currently: {dataSources.find(ds => ds.id === selectedDataSource)?.name || 'Unknown'}
+                </span>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Messages */}
@@ -841,7 +754,7 @@ export function GlobalChatPanel() {
           </div>
          
           <div className="text-xs text-gray-500 mt-2">
-            Press Enter to send • Shift+Enter for new line • Drag left edge to resize • Ctrl+Shift+I to toggle
+            Press Enter to send • Shift+Enter for new line • Drag left edge to resize
           </div>
         </div>
       </div>

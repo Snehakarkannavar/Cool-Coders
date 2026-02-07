@@ -25,7 +25,7 @@ const UserSchema = new Schema<IUser>({
   lastLoginAt: Date,
 });
 
-// Indexes
-UserSchema.index({ email: 1 });
+// Note: Email index is automatically created by unique: true on the email field
+// No need for explicit index creation
 
 export const User = mongoose.model<IUser>('User', UserSchema);

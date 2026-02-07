@@ -3,7 +3,10 @@
  * Uses Google's Gemini API to analyze data and answer questions
  */
 
-import { DataColumn } from '@/contexts/DataContext';
+export interface DataColumn {
+  name: string;
+  type: 'number' | 'string' | 'date';
+}
 
 export interface DatasetInfo {
   name: string;
@@ -55,13 +58,19 @@ export async function askGemini(
   // Calculate statistics from full dataset
   const statistics = calculateStatistics(datasetInfo.data, datasetInfo.columns);
   
-  // Prepare context for Gemini
+  console.log('📊 Statistics calculated:', {
+    numericCols: statistics.numericColumns.length,
+    stringCols: statistics.stringColumns.length,
+    dateCols: statistics.dateColumns.length
+  });
+  
+  // Prepare context for Gemini with enhanced prompt
   const context = buildGeminiPrompt(userQuery, datasetInfo, sampledData, statistics, totalRows);
   
   try {
     // Call Gemini API
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: {
@@ -89,7 +98,16 @@ export async function askGemini(
     }
 
     const result = await response.json();
+    
+    console.log('✅ Gemini API response received successfully');
+    
+    if (!result.candidates || !result.candidates[0]) {
+      throw new Error('Invalid response from Gemini API: No candidates returned');
+    }
+    
     const aiResponse = result.candidates[0].content.parts[0].text;
+    
+    console.log('📝 AI Response length:', aiResponse.length, 'characters');
     
     // Parse the response to detect visualization requests
     const shouldNavigateToVisualBuilder = detectVisualizationRequest(userQuery);
@@ -106,7 +124,7 @@ export async function askGemini(
 }
 
 /**
- * Calculate comprehensive statistics from the full dataset
+ * Calculate comprehensive statistics from the full dataset with robust error handling
  */
 function calculateStatistics(data: any[], columns: DataColumn[]): any {
   const stats: any = {
@@ -117,69 +135,97 @@ function calculateStatistics(data: any[], columns: DataColumn[]): any {
     dateColumns: []
   };
   
+  console.log(`📊 Calculating statistics for ${data.length} rows, ${columns.length} columns...`);
+  
   columns.forEach(col => {
-    if (col.type === 'number') {
-      const values = data.map(row => Number(row[col.name])).filter(v => !isNaN(v) && v !== null);
-      if (values.length > 0) {
-        const sum = values.reduce((a, b) => a + b, 0);
-        const avg = sum / values.length;
-        const min = Math.min(...values);
-        const max = Math.max(...values);
-        const sorted = [...values].sort((a, b) => a - b);
-        const median = values.length % 2 === 0 
-          ? (sorted[values.length / 2 - 1] + sorted[values.length / 2]) / 2 
-          : sorted[Math.floor(values.length / 2)];
+    try {
+      if (col.type === 'number') {
+        const values = data.map(row => Number(row[col.name])).filter(v => !isNaN(v) && v !== null && v !== undefined && isFinite(v));
         
-        stats.numericColumns.push({
-          name: col.name,
-          count: values.length,
-          nullCount: data.length - values.length,
-          nullPercentage: ((data.length - values.length) / data.length * 100).toFixed(2),
-          min,
-          max,
-          average: avg,
-          median,
-          sum,
-          range: max - min
-        });
-      }
-    } else if (col.type === 'string') {
-      const values = data.map(row => row[col.name]).filter(v => v !== null && v !== '' && v !== undefined);
-      const unique = Array.from(new Set(values));
-      const frequencyMap = values.reduce((acc: any, val) => {
-        acc[val] = (acc[val] || 0) + 1;
-        return acc;
-      }, {});
-      const topValues = Object.entries(frequencyMap)
-        .sort((a: any, b: any) => b[1] - a[1])
-        .slice(0, 5);
-      
-      stats.stringColumns.push({
-        name: col.name,
-        count: values.length,
-        nullCount: data.length - values.length,
-        nullPercentage: ((data.length - values.length) / data.length * 100).toFixed(2),
-        uniqueValues: unique.length,
-        topValues: topValues.map((v: any) => ({ value: v[0], count: v[1], percentage: (v[1] / data.length * 100).toFixed(2) + '%' }))
-      });
-    } else if (col.type === 'date') {
-      const values = data.map(row => new Date(row[col.name])).filter(v => !isNaN(v.getTime()));
-      if (values.length > 0) {
-        const timestamps = values.map(d => d.getTime());
-        const minDate = new Date(Math.min(...timestamps));
-        const maxDate = new Date(Math.max(...timestamps));
+        if (values.length > 0) {
+          const sum = values.reduce((a, b) => a + b, 0);
+          const avg = sum / values.length;
+          const min = Math.min(...values);
+          const max = Math.max(...values);
+          const sorted = [...values].sort((a, b) => a - b);
+          const median = values.length % 2 === 0 
+            ? (sorted[values.length / 2 - 1] + sorted[values.length / 2]) / 2 
+            : sorted[Math.floor(values.length / 2)];
+          
+          stats.numericColumns.push({
+            name: col.name,
+            count: values.length,
+            nullCount: data.length - values.length,
+            nullPercentage: ((data.length - values.length) / data.length * 100).toFixed(2),
+            min: Number(min.toFixed(2)),
+            max: Number(max.toFixed(2)),
+            average: Number(avg.toFixed(2)),
+            median: Number(median.toFixed(2)),
+            sum: Number(sum.toFixed(2)),
+            range: Number((max - min).toFixed(2))
+          });
+          
+          console.log(`  ✓ ${col.name}: ${values.length} values, avg=${avg.toFixed(2)}, range=${min.toFixed(2)}-${max.toFixed(2)}`);
+        }
+      } else if (col.type === 'string') {
+        const values = data.map(row => row[col.name]).filter(v => v !== null && v !== '' && v !== undefined);
         
-        stats.dateColumns.push({
-          name: col.name,
-          count: values.length,
-          nullCount: data.length - values.length,
-          earliestDate: minDate.toISOString().split('T')[0],
-          latestDate: maxDate.toISOString().split('T')[0],
-          dateRange: Math.ceil((maxDate.getTime() - minDate.getTime()) / (1000 * 60 * 60 * 24)) + ' days'
-        });
+        if (values.length > 0) {
+          const unique = Array.from(new Set(values));
+          const frequencyMap = values.reduce((acc: any, val) => {
+            const key = String(val).trim(); // Normalize the value
+            acc[key] = (acc[key] || 0) + 1;
+            return acc;
+          }, {});
+          
+          const sortedFrequencies = Object.entries(frequencyMap)
+            .sort((a: any, b: any) => b[1] - a[1])
+            .slice(0, 5);
+          
+          stats.stringColumns.push({
+            name: col.name,
+            count: values.length,
+            nullCount: data.length - values.length,
+            nullPercentage: ((data.length - values.length) / data.length * 100).toFixed(2),
+            uniqueValues: unique.length,
+            topValues: sortedFrequencies.map(([value, count]: any) => ({
+              value: String(value).substring(0, 50), // Limit length for display
+              count,
+              percentage: ((count / values.length) * 100).toFixed(1) + '%'
+            }))
+          });
+          
+          console.log(`  ✓ ${col.name}: ${values.length} values, ${unique.length} unique, top="${sortedFrequencies[0]?.[0]}"`);
+          console.log(`  ✓ ${col.name}: ${values.length} values, ${unique.length} unique, top="${sortedFrequencies[0]?.[0]}"`);
+        }
+      } else if (col.type === 'date') {
+        const values = data.map(row => new Date(row[col.name])).filter(v => !isNaN(v.getTime()));
+        
+        if (values.length > 0) {
+          const timestamps = values.map(d => d.getTime());
+          const minDate = new Date(Math.min(...timestamps));
+          const maxDate = new Date(Math.max(...timestamps));
+          const daysDiff = Math.ceil((maxDate.getTime() - minDate.getTime()) / (1000 * 60 * 60 * 24));
+          
+          stats.dateColumns.push({
+            name: col.name,
+            count: values.length,
+            nullCount: data.length - values.length,
+            earliestDate: minDate.toISOString().split('T')[0],
+            latestDate: maxDate.toISOString().split('T')[0],
+            dateRange: `${daysDiff} days`
+          });
+          
+          console.log(`  ✓ ${col.name}: ${values.length} dates, range=${minDate.toISOString().split('T')[0]} to ${maxDate.toISOString().split('T')[0]}`);
+        }
       }
+    } catch (error) {
+      console.warn(`⚠️ Error calculating statistics for column "${col.name}":`, error);
+      // Continue with next column
     }
   });
+  
+  console.log(`✅ Statistics complete: ${stats.numericColumns.length} numeric, ${stats.stringColumns.length} string, ${stats.dateColumns.length} date columns`);
   
   return stats;
 }
@@ -194,20 +240,38 @@ function buildGeminiPrompt(
   statistics: any,
   totalRows: number
 ): string {
-  return `You are an expert data analyst assistant helping users understand their data and create insights.
+  // Determine query intent for better response
+  const queryLower = userQuery.toLowerCase();
+  const isStatsQuery = queryLower.includes('statistic') || queryLower.includes('summary') || queryLower.includes('overview');
+  const isInsightsQuery = queryLower.includes('insight') || queryLower.includes('pattern') || queryLower.includes('trend') || queryLower.includes('find');
+  const isVisualizationQuery = queryLower.includes('visual') || queryLower.includes('chart') || queryLower.includes('graph');
+  const isSpecificQuery = queryLower.includes('what') || queryLower.includes('how many') || queryLower.includes('which') || queryLower.includes('show');
+
+  return `You are an expert data analyst assistant with deep knowledge of statistical analysis and business intelligence. Your role is to analyze data accurately and provide actionable insights.
+
+**CRITICAL INSTRUCTIONS:**
+1. Base your answer EXCLUSIVELY on the provided statistics and sample data below
+2. Use EXACT numbers from the statistics - do not estimate or guess
+3. Be specific and concrete - cite actual data points
+4. Format your response clearly with line breaks (\\n) and bold headers (**header**)
+5. If asked about specific columns or values, reference them directly from the data
+${isStatsQuery ? '6. Focus on comprehensive statistical analysis with all key metrics' : ''}
+${isInsightsQuery ? '6. Focus on discovering meaningful patterns, correlations, and business insights' : ''}
+${isVisualizationQuery ? '6. Recommend specific chart types and explain which columns to use for best visualization' : ''}
+${isSpecificQuery ? '6. Answer the specific question directly with precise data from the statistics' : ''}
 
 **User's Question:** "${userQuery}"
 
 **Dataset Information:**
 - Dataset Name: ${datasetInfo.name}
-- Total Rows: ${totalRows.toLocaleString()}
+- Total Rows: ${totalRows.toLocaleString()} (COMPLETE dataset)
 - Total Columns: ${datasetInfo.columns.length}
-- Sample Size Provided: ${sampledData.length} rows (representative sample)
+- Sample Data Provided: ${sampledData.length} rows for context
 
 **Column Schema:**
 ${datasetInfo.columns.map(col => `- ${col.name} (${col.type})`).join('\n')}
 
-**Statistics from FULL Dataset (${totalRows} rows):**
+**COMPLETE Statistics from ALL ${totalRows} rows:**
 
 ${statistics.numericColumns.length > 0 ? `
 **Numeric Columns:**
@@ -236,37 +300,76 @@ ${statistics.dateColumns.map((col: any) => `
     • Range: ${col.earliestDate} to ${col.latestDate} (${col.dateRange})
 `).join('\n')}` : ''}
 
-**Sample Data (for context):**
+**Sample Data (first 10 rows for structure reference):**
 ${JSON.stringify(sampledData.slice(0, 10), null, 2)}
 
-**Instructions:**
-1. Answer the user's question based on the statistics and sample data provided
-2. Provide specific insights with actual numbers from the statistics
-3. If they ask for visualizations, recommend appropriate chart types based on the column types
-4. Format your response in a clear, professional manner with line breaks (\\n) and bold text (**text**)
-5. Keep responses concise but informative
-6. If creating visualizations, suggest which columns to use and why
+**YOUR RESPONSE REQUIREMENTS:**
 
-**Important Notes:**
-- All statistics are calculated from the COMPLETE dataset of ${totalRows} rows
-- The sample data is just for context to understand the structure
-- Be specific and cite actual numbers from the statistics
-- Format your response to be easily readable
+1. **Accuracy First**: Use only the statistics provided above. All statistics are from the COMPLETE ${totalRows}-row dataset.
 
-Please provide a helpful, data-driven response:`
+2. **Formatting**: 
+   - Use **Bold Headers** for sections
+   - Use \\n for line breaks between sections
+   - Use bullet points (•) for lists
+   - Use ▸ for sub-items
+   - Keep paragraphs short and scannable
+
+3. **Content Structure**:
+   ${isStatsQuery ? '- Start with key summary statistics\n   - Cover all numeric columns with Min/Max/Average/Median\n   - List categorical column distributions\n   - Highlight any data quality issues (nulls, outliers)' : ''}
+   ${isInsightsQuery ? '- Identify 3-5 key insights from the data\n   - Look for correlations, patterns, or anomalies\n   - Explain business implications\n   - Suggest areas for deeper investigation' : ''}
+   ${isVisualizationQuery ? '- Recommend 2-3 specific chart types\n   - Specify exact columns to use for X/Y axes\n   - Explain why each visualization fits the data\n   - Mention what insights each chart would reveal' : ''}
+   ${isSpecificQuery ? '- Answer the specific question directly first\n   - Provide exact numbers and context\n   - Add relevant additional context if helpful\n   - Reference specific rows or values if applicable' : ''}
+
+4. **Numbers & Citations**:
+   - Always include actual values from statistics
+   - Use .toLocaleString() format for large numbers
+   - Include percentages where relevant
+   - Reference column names exactly as they appear
+
+5. **Tone**: Professional, insightful, and actionable. Write like a senior data analyst.
+
+**EXAMPLE GOOD RESPONSE FORMAT:**
+
+**📊 Key Statistics**
+• Total records analyzed: [exact number]
+• Date range: [if applicable]
+
+**📈 Main Findings**
+• Finding 1 with specific numbers
+• Finding 2 with specific numbers
+
+**💡 Insights**
+• [Actionable insight based on data]
+
+Now provide your data-driven response to: "${userQuery}"`
 }
 
 /**
- * Detect if user wants to create a visualization
+ * Detect if user wants to create a visualization with enhanced pattern matching
  */
 function detectVisualizationRequest(query: string): boolean {
   const lowerQuery = query.toLowerCase();
-  const visualKeywords = [
-    'visual', 'chart', 'graph', 'plot', 
-    'create', 'build', 'make', 'draw',
-    'pie', 'bar', 'line', 'scatter', 'histogram',
-    'show me', 'display'
-  ];
   
-  return visualKeywords.some(keyword => lowerQuery.includes(keyword));
+  // Direct visualization keywords
+  const directKeywords = ['create chart', 'create graph', 'make chart', 'build chart', 'draw chart', 'show chart', 'create visual', 'make graph'];
+  if (directKeywords.some(keyword => lowerQuery.includes(keyword))) {
+    console.log('🎯 Visualization request detected (direct):', query);
+    return true;
+  }
+  
+  // Chart type keywords
+  const chartTypes = ['pie chart', 'bar chart', 'line chart', 'scatter plot', 'histogram', 'area chart', 'bubble chart'];
+  if (chartTypes.some(type => lowerQuery.includes(type))) {
+    console.log('🎯 Visualization request detected (chart type):', query);
+    return true;
+  }
+  
+  // Visualization actions
+  const visualActions = ['visualize', 'plot', 'chart'];
+  if (visualActions.some(action => lowerQuery.includes(action))) {
+    console.log('🎯 Visualization request detected (action):', query);
+    return true;
+  }
+  
+  return false;
 }

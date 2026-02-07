@@ -6,35 +6,38 @@ let isConnected = false;
 
 export async function connectToMongoDB() {
   if (isConnected) {
-    console.log('✅ Using existing MongoDB connection');
+    console.log('[MongoDB] Using existing connection');
     return;
   }
 
   try {
     await mongoose.connect(MONGODB_URI, {
       // Mongoose 6+ doesn't need these options, but kept for compatibility
-      serverSelectionTimeoutMS: 5000,
+      serverSelectionTimeoutMS: 10000, // Increased timeout
       socketTimeoutMS: 45000,
     });
 
     isConnected = true;
-    console.log('✅ MongoDB connected successfully');
+    console.log('[MongoDB] Connected successfully');
     console.log(`📦 Database: ${mongoose.connection.name}`);
     
     mongoose.connection.on('error', (err) => {
-      console.error('❌ MongoDB connection error:', err);
+      console.error('[MongoDB] Connection error:', err);
       isConnected = false;
     });
 
     mongoose.connection.on('disconnected', () => {
-      console.log('⚠️  MongoDB disconnected');
+      console.log('[MongoDB] Disconnected');
       isConnected = false;
     });
 
-  } catch (error) {
-    console.error('❌ MongoDB connection failed:', error);
+  } catch (error: any) {
+    console.log('[MongoDB] Not connected (optional)');
+    console.log('   Using file-based storage instead.');
+    console.log('   To enable MongoDB: Configure MONGODB_URI in .env');
+    
     isConnected = false;
-    throw error;
+    // MongoDB is optional - continue without it
   }
 }
 
@@ -46,9 +49,9 @@ export async function disconnectFromMongoDB() {
   try {
     await mongoose.disconnect();
     isConnected = false;
-    console.log('✅ MongoDB disconnected');
+    console.log('[MongoDB] Disconnected successfully');
   } catch (error) {
-    console.error('❌ Error disconnecting from MongoDB:', error);
+    console.error('[MongoDB] Error disconnecting:', error);
     throw error;
   }
 }
